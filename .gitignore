@@ -1,0 +1,42 @@
+# Binaries
+/agentdx
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace file
+go.work
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+.agentdx/
+
+# Build
+bin/
+dist/
+
+# Documentation (auto-generated)
+docs/src/content/docs/commands/*.md
+docs/dist/
+docs/node_modules/
+docs/.astro/
+__debug*
+.agentdx/
