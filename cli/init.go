@@ -9,12 +9,14 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/doveaia/agentdx/config"
 	"github.com/doveaia/agentdx/indexer"
+	"github.com/doveaia/agentdx/localsetup"
 )
 
 var (
 	initProvider       string
 	initBackend        string
 	initNonInteractive bool
+	initLocal          bool
 )
 
 const (
@@ -39,12 +41,18 @@ func init() {
 	initCmd.Flags().StringVarP(&initProvider, "provider", "p", "", "Embedding provider (ollama, lmstudio, openai, or postgres)")
 	initCmd.Flags().StringVarP(&initBackend, "backend", "b", "", "Storage backend (gob or postgres)")
 	initCmd.Flags().BoolVar(&initNonInteractive, "yes", false, "Use defaults without prompting")
+	initCmd.Flags().BoolVarP(&initLocal, "local", "l", false, "Non-interactive local setup with PostgreSQL FTS")
 }
 
 func runInit(cmd *cobra.Command, args []string) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("failed to get current directory: %w", err)
+	}
+
+	// Handle --local flag
+	if initLocal {
+		return runLocalInit(cwd)
 	}
 
 	// Check if already initialized
@@ -187,6 +195,79 @@ func runInit(cmd *cobra.Command, args []string) error {
 		fmt.Println("\nUsing PostgreSQL Full Text Search (no external embedding service needed).")
 		fmt.Println("Make sure PostgreSQL 15+ is running and accessible.")
 	}
+
+	return nil
+}
+
+// runLocalInit handles the --local flag for non-interactive local PostgreSQL setup.
+func runLocalInit(cwd string) error {
+	// Check if already initialized (same check as interactive mode)
+	if config.Exists(cwd) {
+		fmt.Println("agentdx is already initialized in this directory.")
+		fmt.Printf("Configuration: %s\n", config.GetConfigPath(cwd))
+		return nil
+	}
+
+	fmt.Println("Initializing agentdx with local PostgreSQL setup...")
+
+	// Run the local setup
+	result, err := localsetup.RunLocalSetup(cwd)
+	if err != nil {
+		return fmt.Errorf("local setup failed: %w", err)
+	}
+
+	// Create and configure the config
+	cfg := config.DefaultConfig()
+	cfg.Mode = "local"
+	cfg.Index.Embedder.Provider = "postgres"
+	cfg.Index.Embedder.Model = "none"
+	cfg.Index.Embedder.Endpoint = "none"
+	cfg.Index.Embedder.Dimensions = 1536
+	cfg.Index.Store.Backend = "postgres"
+	cfg.Index.Store.Postgres.DSN = result.DSN
+
+	// Save configuration
+	if err := cfg.Save(cwd); err != nil {
+		return fmt.Errorf("failed to save configuration: %w", err)
+	}
+
+	fmt.Printf("\nCreated configuration at %s\n", config.GetConfigPath(cwd))
+
+	// Add .agentdx/ to .gitignore
+	gitignorePath := cwd + "/.gitignore"
+	if _, err := os.Stat(gitignorePath); err == nil {
+		if err := indexer.AddToGitignore(cwd, ".agentdx/"); err != nil {
+			fmt.Printf("Warning: could not update .gitignore: %v\n", err)
+		} else {
+			fmt.Println("Added .agentdx/ to .gitignore")
+		}
+	}
+
+	// Print results
+	if result.DockerUsed {
+		fmt.Println("\nagentdx initialized successfully!")
+		fmt.Printf("  Container: %s (running)\n", result.ContainerName)
+		fmt.Printf("  Database:  %s\n", result.DatabaseName)
+		fmt.Printf("  DSN:       %s\n", result.DSN)
+	} else {
+		fmt.Println("\nagentdx initialized (Docker not available).")
+		fmt.Printf("  Database:  %s (needs manual creation)\n", result.DatabaseName)
+		fmt.Printf("  DSN:       %s\n", result.DSN)
+		fmt.Println("\nTo set up the database manually:")
+		fmt.Println("  1. Install PostgreSQL 17 with pg_search extensions")
+		fmt.Println("     See: https://github.com/timescale/pg_textsearch")
+		fmt.Println("  2. Or install Docker and run:")
+		fmt.Printf("     docker compose -f %s up -d\n", result.ComposeFilePath)
+		fmt.Printf("  3. Create database: CREATE DATABASE %s;\n", result.DatabaseName)
+	}
+
+	if result.ComposeGenerated {
+		fmt.Printf("\nDocker Compose file: %s\n", result.ComposeFilePath)
+	}
+
+	fmt.Println("\nNext steps:")
+	fmt.Println("  1. Start the indexing daemon: agentdx watch")
+	fmt.Println("  2. Search your code: agentdx search \"your query\"")
 
 	return nil
 }

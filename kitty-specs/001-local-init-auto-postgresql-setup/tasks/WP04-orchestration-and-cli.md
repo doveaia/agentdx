@@ -7,7 +7,7 @@ subtasks:
   - "T011"
 title: "Orchestration & CLI Integration"
 phase: "Phase 3 - Integration"
-lane: "doing"
+lane: "for_review"
 assignee: ""
 agent: "claude"
 shell_pid: "16923"
@@ -24,6 +24,11 @@ history:
     agent: "claude"
     shell_pid: "16923"
     action: "Started implementation"
+  - timestamp: "2026-01-13T22:35:00Z"
+    lane: "for_review"
+    agent: "claude"
+    shell_pid: "16923"
+    action: "Ready for review"
 ---
 
 # Work Package Prompt: WP04 – Orchestration & CLI Integration
