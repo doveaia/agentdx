@@ -7,10 +7,10 @@ subtasks:
   - "T004"
 title: "Config Mode Field & Slug Utility"
 phase: "Phase 1 - Foundation"
-lane: "doing"
+lane: "for_review"
 assignee: ""
 agent: "claude"
-shell_pid: "50020"
+shell_pid: "54835"
 review_status: ""
 reviewed_by: ""
 history:
@@ -210,3 +210,4 @@ history:
 
 - 2026-01-13T15:30:00Z – system – lane=planned – Prompt created.
 - 2026-01-13T16:00:46Z – claude – shell_pid=50020 – lane=doing – Started implementation
+- 2026-01-13T16:08:13Z – claude – shell_pid=54835 – lane=for_review – Ready for review
