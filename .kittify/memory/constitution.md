@@ -1,156 +1,111 @@
 <!--
-Sync Impact Report:
-- Version change: (initial) → 1.0.0
-- Modified principles: N/A (initial creation)
-- Added sections: All core principles, Testing Standards, Performance Requirements, Development Workflow
-- Removed sections: N/A
-- Templates requiring updates:
-  - ✅ .kittify/templates/plan-template.md (reviewed for alignment)
-  - ✅ .kittify/templates/spec-template.md (reviewed for alignment)
-  - ✅ .kittify/templates/tasks-template.md (reviewed for alignment)
-  - ✅ .kittify/templates/commands/*.md (reviewed for generic guidance)
-- Follow-up TODOs: None
+Sync Impact Report
+Version change: Initial -> 1.0.0
+Modified principles: N/A (initial creation)
+Added sections: All
+Removed sections: N/A
+Templates requiring updates:
+  - .kittify/missions/software-dev/templates/plan-template.md (no constitution gates specified - using generic template)
+  - .kittify/missions/software-dev/templates/spec-template.md (aligned with quality principles)
+  - .kittify/missions/software-dev/templates/tasks-template.md (aligned with testing requirements)
+Follow-up TODOs: None
 -->
 
 # agentdx Constitution
 
 ## Core Principles
 
-### I. Interface-First Architecture
+### I. Code Quality
 
-Every major component MUST expose a well-defined interface. Interfaces define the contract between components, enabling:
-- Swappable implementations (e.g., different embedder providers, storage backends)
-- Independent testing through mocks
-- Clear separation of concerns
+**Semantic Clarity**: Code must be self-documenting. Function and variable names must clearly describe their purpose. Complex logic requires inline comments explaining the "why," not the "what."
 
-**Rationale**: agentdx is designed for extensension. Users may want to use different embedding providers (Ollama, OpenAI, custom) or storage backends (GOB files, PostgreSQL, etc.). Interface-based design makes this possible without core changes.
+**Interface-First Design**: All core functionality is defined through interfaces (`embedder.Embedder`, `store.VectorStore`). Implementations must satisfy these contracts without breaking existing consumers.
 
-### II. Semantic Search as Primary Discovery
+**Error Handling**: Errors MUST be returned explicitly (not silenced) and include context. Use Go's error wrapping (`fmt.Errorf` with `%w`) to preserve error chains for debugging.
 
-Code exploration MUST prioritize semantic understanding over text matching:
-- Use `agentdx search` for finding code by intent/purpose
-- Reserve exact text matching (Grep/Glob) for literal searches only
-- English queries yield better results due to embedding model training
+**Go Conventions**: Follow standard Go project layout, effective Go idioms, and use `gofumpt` for formatting. Run `make lint` before committing.
 
-**Rationale**: Vector-based semantic search understands code meaning, enabling developers to find functionality without knowing exact variable/function names.
+### II. Testing Standards (NON-NEGOTIABLE)
 
-### III. Code Quality (NON-NEGOTIABLE)
+**Test Coverage**: All new code requires corresponding tests. Aim for >80% coverage. Critical paths (indexing, search, embedder interfaces) require 100% coverage.
 
-All code MUST meet these quality standards:
-- Pass `make lint` with zero violations (golangci-lint)
-- Pass `make test` with race detection enabled
-- Follow Go conventions and effective Go practices
-- Include godoc comments for exported types, functions, and constants
+**Test Types**:
+- **Unit tests**: Test individual functions and methods in isolation
+- **Integration tests**: Test interactions between components (e.g., indexer + embedder + store)
+- **Contract tests**: Verify interface implementations satisfy expected behavior
 
-**Rationale**: Consistent code quality reduces bugs, improves maintainability, and ensures the codebase remains accessible to all contributors.
+**Test First**: For bug fixes, write a failing test reproducing the bug first, then fix it.
 
-### IV. Testing Standards
+**Mock External Dependencies**: Embedder providers (Ollama, OpenAI) must be mockable for testing. Use interfaces to enable test doubles.
 
-Testing discipline is mandatory:
-- Unit tests: All packages MUST have test coverage for core logic
-- Integration tests: Required for cross-component interactions (embedder + store, file system operations)
-- Race detection: `make test` includes `-race` flag; race conditions MUST be resolved
-- Coverage: New features should not significantly reduce overall coverage percentage
+### III. User Experience Consistency
 
-**Rationale**: agentdx operates on user codebases. Bugs can corrupt indexes or produce incorrect results. Comprehensive testing is essential for reliability.
-
-### V. User Experience Consistency
-
-CLI behavior MUST be predictable and consistent:
-- All commands follow: `command [flags] [args]` pattern
+**CLI Interface**: All commands follow consistent patterns:
+- Flags use `kebab-case`
+- Help text is clear and concise
 - Errors go to stderr, normal output to stdout
-- Support both human-readable and JSON output formats where applicable
-- Configuration via `.agentdx/config.yaml` in project root
-- Respect gitignore and common ignore patterns automatically
+- JSON output mode available for all list/query commands
 
-**Rationale**: Developers use agentdx across many projects. Consistent behavior reduces cognitive load and makes the tool intuitive.
+**Privacy First**: agentdx is designed for local-first operation. Default configurations must prioritize user privacy (local Ollama vs cloud OpenAI).
 
-## Performance Requirements
+**AI Agent Integration**: All search/trace commands support `--json` and `--compact` flags for optimal AI agent consumption.
 
-### Indexing Performance
+### IV. Performance Standards
 
-- Initial indexing SHOULD complete within reasonable time for typical projects (<5 min for 10k LOC)
-- Incremental updates (file watcher) SHOULD complete within 1 second per changed file
-- Memory usage MUST remain bounded; large projects should not require excessive RAM
+**Indexing Performance**: Initial indexing must handle 100k LOC repositories within 5 minutes on typical hardware (M1/M2 Mac, modern x86_64 Linux).
 
-### Search Performance
+**Search Latency**: Semantic search queries must return results within 500ms for indices up to 100k chunks.
 
-- Search queries SHOULD return results within 500ms for typical indexes
-- Similarity search MUST use approximate nearest neighbor (ANN) algorithms for large indexes
-- Result ranking MUST be deterministic for identical queries
+**Memory Efficiency**: The indexer must process files in streams, not load entire repositories into memory. Chunking operations must be incremental.
 
-### Resource Limits
+**Watcher Responsiveness**: File system changes must be reflected in the index within 2 seconds of detection.
 
-- Chunking parameters MUST be configurable (size, overlap)
-- Embedding requests MUST batch when possible to reduce API overhead
-- File watching MUST debounce rapid successive changes
+## Performance Benchmarks
 
-**Rationale**: agentdx is a developer tool that runs frequently during development. Performance directly impacts developer productivity.
+**Repository Size Targets**:
+- Small: <10k LOC - <30s initial index, <100ms search
+- Medium: 10k-100k LOC - <5min initial index, <500ms search
+- Large: 100k-1M LOC - <30min initial index, <2s search
+
+**Metrics Collection**: Critical paths include timing metrics for indexing and search operations. Use these to detect regressions.
 
 ## Development Workflow
 
-### Commit Convention
+**Branch Protection**: Never push directly to `main`. All work happens on feature branches with descriptive names: `feat/42-add-new-embedder`, `fix/123-index-out-of-bounds`.
 
-Follow conventional commits: `type(scope): description`
+**Conventional Commits**: Follow `type(scope): description` format:
+- `feat`: New feature
+- `fix`: Bug fix
+- `refactor`: Code restructuring without behavior change
+- `test`: Adding or updating tests
+- `docs`: Documentation changes
+- `chore`: Maintenance tasks
 
-Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
-
-Examples:
-- `feat(embedder): add Cohere embedding provider`
-- `fix(store): correct pgvector index creation`
-- `chore(deps): upgrade dependencies`
-
-### Branch Policy
-
-- NEVER push directly to `main`
-- All changes via feature branches: `<type>/<issue-number>-<short-description>`
-- Pull required for all changes
-- CI MUST pass before merge
-- Code review required for non-trivial changes
-
-### Quality Gates
-
-Before committing:
-1. `make lint` - zero linter violations
-2. `make test` - all tests pass with race detection
-3. Manual testing for CLI changes (verify help text, flags, error messages)
-
-**Rationale**: These gates prevent broken code from entering the codebase and maintain code quality standards.
+**Code Review**: All PRs require:
+- Passing CI (lint, test, build)
+- At least one approving review for non-trivial changes
+- No merge conflicts with main
 
 ## Security & Privacy
 
-### Local-First Default
+**No Telemetry by Default**: agentdx must not send user code or usage data to external services without explicit opt-in.
 
-- Local embeddings (Ollama) are preferred over cloud APIs
-- When cloud APIs are used, clearly document data transmission
-- Configuration files MUST NOT contain sensitive credentials
+**API Key Safety**: API keys (OpenAI, etc.) must never be logged or included in error messages. Use environment variables or secure config storage.
 
-### File System Safety
-
-- NEVER modify user code files
-- Respect `.gitignore` and other ignore files
-- Warn before operations that may consume significant resources (disk, network, API quotas)
+**Input Validation**: All user inputs (file paths, queries, configs) must be validated and sanitized to prevent path traversal or injection attacks.
 
 ## Governance
 
-### Constitution Authority
+**Constitution Supersedes**: This constitution takes precedence over personal preferences. When in doubt, principles here override "we usually do it this way."
 
-This constitution supersedes all other practices in this project. In case of conflict, the constitution takes precedence.
+**Amendment Process**: Changes require:
+1. Proposal in issue with rationale
+2. Team discussion and consensus
+3. Version bump (MAJOR for breaking changes, MINOR for additions)
+4. Update to this file and all dependent templates
 
-### Amendment Procedure
+**Compliance**: All PRs should reference applicable constitution principles in their description. Reviewers may reject changes violating core principles.
 
-1. Propose changes with clear rationale
-2. Update this document with version bump according to semantic versioning:
-   - MAJOR: Backward incompatible governance/principle removals
-   - MINOR: New principles or material expansions
-   - PATCH: Clarifications, wording fixes
-3. All PRs MUST verify compliance with current constitution
-4. Update dependent templates and documentation to reflect changes
-
-### Compliance Review
-
-- All features must align with core principles
-- Complexity must be justified (YAGNI principles apply)
-- Use `CLAUDE.md` for runtime development guidance
+**Runtime Guidance**: See `CLAUDE.md` for agent-specific runtime development guidance.
 
 **Version**: 1.0.0 | **Ratified**: 2026-01-13 | **Last Amended**: 2026-01-13

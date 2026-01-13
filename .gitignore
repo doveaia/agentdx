@@ -43,3 +43,16 @@ __debug*
 
 # Added by Spec Kitty CLI (auto-managed)
 .doveaia
+.worktrees/
+.claude/
+.codex/
+.opencode/
+.windsurf/
+.gemini/
+.cursor/
+.qwen/
+.kilocode/
+.augment/
+.roo/
+.amazonq/
+.github/copilot/
