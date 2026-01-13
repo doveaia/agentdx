@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 2026-01-13
+
+FEATURE: Add Mode field to Config struct ("local" or "remote")
+FEATURE: Create localsetup package with DockerClient and DatabaseClient interfaces
+FEATURE: Add ToSlug function for database-safe name conversion
+FEATURE: Implement Docker container management (IsDockerAvailable, ContainerExists, ContainerRunning, CreateContainer, StartContainer)
+FEATURE: Implement PostgreSQL database setup with WaitForPostgres and CreateDatabase functions
+FEATURE: Add Docker Compose file generation (WriteComposeFile, GenerateComposeYAML)
+FEATURE: Add RunLocalSetup orchestration function for complete local setup
+FEATURE: Add --local/-l flag to init command for non-interactive local PostgreSQL setup
+
 ## [0.14.0] - 2026-01-12
 
 ### Added

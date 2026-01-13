@@ -148,11 +148,13 @@ func TestBackwardCompatibility(t *testing.T) {
 		{
 			name: "ollama without endpoint or dimensions",
 			configYAML: `version: 1
-embedder:
-  provider: ollama
-  model: nomic-embed-text
-store:
-  backend: gob
+mode: remote
+index:
+  embedder:
+    provider: ollama
+    model: nomic-embed-text
+  store:
+    backend: gob
 `,
 			expectedEndpoint:   "http://localhost:11434",
 			expectedDimensions: 768,
@@ -160,12 +162,14 @@ store:
 		{
 			name: "openai without endpoint or dimensions",
 			configYAML: `version: 1
-embedder:
-  provider: openai
-  model: text-embedding-3-small
-  api_key: sk-test
-store:
-  backend: gob
+mode: remote
+index:
+  embedder:
+    provider: openai
+    model: text-embedding-3-small
+    api_key: sk-test
+  store:
+    backend: gob
 `,
 			expectedEndpoint:   "https://api.openai.com/v1",
 			expectedDimensions: 1536,
@@ -173,11 +177,13 @@ store:
 		{
 			name: "lmstudio without endpoint or dimensions",
 			configYAML: `version: 1
-embedder:
-  provider: lmstudio
-  model: text-embedding-nomic-embed-text-v1.5
-store:
-  backend: gob
+mode: remote
+index:
+  embedder:
+    provider: lmstudio
+    model: text-embedding-nomic-embed-text-v1.5
+  store:
+    backend: gob
 `,
 			expectedEndpoint:   "http://127.0.0.1:1234",
 			expectedDimensions: 768,
@@ -185,13 +191,15 @@ store:
 		{
 			name: "openai with custom endpoint keeps it",
 			configYAML: `version: 1
-embedder:
-  provider: openai
-  model: text-embedding-ada-002
-  endpoint: https://my-azure.openai.azure.com/v1
-  api_key: sk-test
-store:
-  backend: gob
+mode: remote
+index:
+  embedder:
+    provider: openai
+    model: text-embedding-ada-002
+    endpoint: https://my-azure.openai.azure.com/v1
+    api_key: sk-test
+  store:
+    backend: gob
 `,
 			expectedEndpoint:   "https://my-azure.openai.azure.com/v1",
 			expectedDimensions: 1536,
@@ -199,13 +207,15 @@ store:
 		{
 			name: "custom dimensions preserved",
 			configYAML: `version: 1
-embedder:
-  provider: openai
-  model: text-embedding-3-large
-  dimensions: 3072
-  api_key: sk-test
-store:
-  backend: gob
+mode: remote
+index:
+  embedder:
+    provider: openai
+    model: text-embedding-3-large
+    dimensions: 3072
+    api_key: sk-test
+  store:
+    backend: gob
 `,
 			expectedEndpoint:   "https://api.openai.com/v1",
 			expectedDimensions: 3072,

@@ -15,8 +15,10 @@ const (
 	SymbolIndexFileName = "symbols.gob"
 )
 
+// Config holds the agentdx configuration.
 type Config struct {
 	Version int          `yaml:"version"`
+	Mode    string       `yaml:"mode"` // "local" or "remote" - local uses embedded PostgreSQL, remote uses configured backend
 	Index   IndexSection `yaml:"index"`
 }
 type IndexSection struct {
@@ -91,6 +93,7 @@ type TraceConfig struct {
 func DefaultConfig() *Config {
 	return &Config{
 		Version: 1,
+		Mode:    "remote", // Default to remote mode for backward compatibility
 		Index: IndexSection{
 			Embedder: EmbedderConfig{
 				Provider:   "ollama",
