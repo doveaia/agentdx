@@ -1,0 +1,11 @@
+{
+  "enabledPlugins": {
+    "ralph-loop@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "gopls-lsp@claude-plugins-official": true,
+    "aichat@cctools-plugins": true,
+    "tmux-cli@cctools-plugins": true,
+    "workflow@cctools-plugins": true,
+    "safety-hooks@cctools-plugins": true
+  }
+}

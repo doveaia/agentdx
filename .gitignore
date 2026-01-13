@@ -40,3 +40,6 @@ docs/node_modules/
 docs/.astro/
 __debug*
 .agentdx/
+
+# Added by Spec Kitty CLI (auto-managed)
+.doveaia
