@@ -60,55 +60,55 @@ func runWatch(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("Starting agentdx watch in %s\n", projectRoot)
-	fmt.Printf("Provider: %s (%s)\n", cfg.Embedder.Provider, cfg.Embedder.Model)
-	fmt.Printf("Backend: %s\n", cfg.Store.Backend)
+	fmt.Printf("Provider: %s (%s)\n", cfg.Index.Embedder.Provider, cfg.Index.Embedder.Model)
+	fmt.Printf("Backend: %s\n", cfg.Index.Store.Backend)
 
 	// Initialize embedder
 	var emb embedder.Embedder
-	switch cfg.Embedder.Provider {
+	switch cfg.Index.Embedder.Provider {
 	case "ollama":
 		ollamaEmb := embedder.NewOllamaEmbedder(
-			embedder.WithOllamaEndpoint(cfg.Embedder.Endpoint),
-			embedder.WithOllamaModel(cfg.Embedder.Model),
-			embedder.WithOllamaDimensions(cfg.Embedder.Dimensions),
+			embedder.WithOllamaEndpoint(cfg.Index.Embedder.Endpoint),
+			embedder.WithOllamaModel(cfg.Index.Embedder.Model),
+			embedder.WithOllamaDimensions(cfg.Index.Embedder.Dimensions),
 		)
 		// Test connection
 		if err := ollamaEmb.Ping(ctx); err != nil {
-			return fmt.Errorf("cannot connect to Ollama: %w\nMake sure Ollama is running and has the %s model", err, cfg.Embedder.Model)
+			return fmt.Errorf("cannot connect to Ollama: %w\nMake sure Ollama is running and has the %s model", err, cfg.Index.Embedder.Model)
 		}
 		emb = ollamaEmb
 	case "openai":
 		var err error
 		emb, err = embedder.NewOpenAIEmbedder(
-			embedder.WithOpenAIModel(cfg.Embedder.Model),
-			embedder.WithOpenAIKey(cfg.Embedder.APIKey),
-			embedder.WithOpenAIEndpoint(cfg.Embedder.Endpoint),
-			embedder.WithOpenAIDimensions(cfg.Embedder.Dimensions),
+			embedder.WithOpenAIModel(cfg.Index.Embedder.Model),
+			embedder.WithOpenAIKey(cfg.Index.Embedder.APIKey),
+			embedder.WithOpenAIEndpoint(cfg.Index.Embedder.Endpoint),
+			embedder.WithOpenAIDimensions(cfg.Index.Embedder.Dimensions),
 		)
 		if err != nil {
 			return fmt.Errorf("failed to initialize OpenAI embedder: %w", err)
 		}
 	case "lmstudio":
 		lmstudioEmb := embedder.NewLMStudioEmbedder(
-			embedder.WithLMStudioEndpoint(cfg.Embedder.Endpoint),
-			embedder.WithLMStudioModel(cfg.Embedder.Model),
-			embedder.WithLMStudioDimensions(cfg.Embedder.Dimensions),
+			embedder.WithLMStudioEndpoint(cfg.Index.Embedder.Endpoint),
+			embedder.WithLMStudioModel(cfg.Index.Embedder.Model),
+			embedder.WithLMStudioDimensions(cfg.Index.Embedder.Dimensions),
 		)
 		if err := lmstudioEmb.Ping(ctx); err != nil {
-			return fmt.Errorf("cannot connect to LM Studio: %w\nMake sure LM Studio is running with the %s model loaded", err, cfg.Embedder.Model)
+			return fmt.Errorf("cannot connect to LM Studio: %w\nMake sure LM Studio is running with the %s model loaded", err, cfg.Index.Embedder.Model)
 		}
 		emb = lmstudioEmb
 	case "postgres":
 		// PostgreSQL FTS doesn't need external embeddings
 		emb = embedder.NewPostgresFTSEmbedder()
 	default:
-		return fmt.Errorf("unknown embedding provider: %s", cfg.Embedder.Provider)
+		return fmt.Errorf("unknown embedding provider: %s", cfg.Index.Embedder.Provider)
 	}
 	defer emb.Close()
 
 	// Initialize store
 	var st store.VectorStore
-	switch cfg.Store.Backend {
+	switch cfg.Index.Store.Backend {
 	case "gob":
 		indexPath := config.GetIndexPath(projectRoot)
 		gobStore := store.NewGOBStore(indexPath)
@@ -119,21 +119,21 @@ func runWatch(cmd *cobra.Command, args []string) error {
 	case "postgres":
 		var err error
 		// Use FTS store when postgres embedder is selected
-		if cfg.Embedder.Provider == "postgres" {
-			st, err = store.NewPostgresFTSStore(ctx, cfg.Store.Postgres.DSN, projectRoot)
+		if cfg.Index.Embedder.Provider == "postgres" {
+			st, err = store.NewPostgresFTSStore(ctx, cfg.Index.Store.Postgres.DSN, projectRoot)
 		} else {
-			st, err = store.NewPostgresStore(ctx, cfg.Store.Postgres.DSN, projectRoot,cfg.Embedder.Dimensions)
+			st, err = store.NewPostgresStore(ctx, cfg.Index.Store.Postgres.DSN, projectRoot,cfg.Index.Embedder.Dimensions)
 		}
 		if err != nil {
 			return fmt.Errorf("failed to connect to postgres: %w", err)
 		}
 	default:
-		return fmt.Errorf("unknown storage backend: %s", cfg.Store.Backend)
+		return fmt.Errorf("unknown storage backend: %s", cfg.Index.Store.Backend)
 	}
 	defer st.Close()
 
 	// Initialize ignore matcher
-	ignoreMatcher, err := indexer.NewIgnoreMatcher(projectRoot, cfg.Ignore)
+	ignoreMatcher, err := indexer.NewIgnoreMatcher(projectRoot, cfg.Index.Ignore)
 	if err != nil {
 		return fmt.Errorf("failed to initialize ignore matcher: %w", err)
 	}
@@ -142,7 +142,7 @@ func runWatch(cmd *cobra.Command, args []string) error {
 	scanner := indexer.NewScanner(projectRoot, ignoreMatcher)
 
 	// Initialize chunker
-	chunker := indexer.NewChunker(cfg.Chunking.Size, cfg.Chunking.Overlap)
+	chunker := indexer.NewChunker(cfg.Index.Chunking.Size, cfg.Index.Chunking.Overlap)
 
 	// Initialize indexer
 	idx := indexer.NewIndexer(projectRoot, st, emb, chunker, scanner)
@@ -157,7 +157,7 @@ func runWatch(cmd *cobra.Command, args []string) error {
 	extractor := trace.NewRegexExtractor()
 
 	// Use default trace languages if not configured
-	tracedLanguages := cfg.Trace.EnabledLanguages
+	tracedLanguages := cfg.Index.Trace.EnabledLanguages
 	if len(tracedLanguages) == 0 {
 		tracedLanguages = []string{".go", ".js", ".ts", ".jsx", ".tsx", ".py", ".php", ".java"}
 	}
@@ -206,7 +206,7 @@ func runWatch(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Symbol index built: %d symbols extracted\n", symbolCount)
 
 	// Initialize watcher
-	w, err := watcher.NewWatcher(projectRoot, ignoreMatcher, cfg.Watch.DebounceMs)
+	w, err := watcher.NewWatcher(projectRoot, ignoreMatcher, cfg.Index.Watch.DebounceMs)
 	if err != nil {
 		return fmt.Errorf("failed to initialize watcher: %w", err)
 	}

@@ -74,43 +74,43 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 			switch input {
 			case "2", "lmstudio":
-				cfg.Embedder.Provider = "lmstudio"
-				cfg.Embedder.Model = "text-embedding-nomic-embed-text-v1.5"
-				cfg.Embedder.Endpoint = "http://127.0.0.1:1234"
-				cfg.Embedder.Dimensions = lmStudioEmbeddingDimensions
+				cfg.Index.Embedder.Provider = "lmstudio"
+				cfg.Index.Embedder.Model = "text-embedding-nomic-embed-text-v1.5"
+				cfg.Index.Embedder.Endpoint = "http://127.0.0.1:1234"
+				cfg.Index.Embedder.Dimensions = lmStudioEmbeddingDimensions
 			case "3", "openai":
-				cfg.Embedder.Provider = "openai"
-				cfg.Embedder.Model = "text-embedding-3-small"
-				cfg.Embedder.Endpoint = "https://api.openai.com/v1"
+				cfg.Index.Embedder.Provider = "openai"
+				cfg.Index.Embedder.Model = "text-embedding-3-small"
+				cfg.Index.Embedder.Endpoint = "https://api.openai.com/v1"
 			case "4", "postgres":
-				cfg.Embedder.Provider = "postgres"
-				cfg.Embedder.Model = "none"
-				cfg.Embedder.Endpoint = "none"
-				cfg.Store.Backend = "postgres"
-				cfg.Embedder.Dimensions = openAI3SmallDimensions
+				cfg.Index.Embedder.Provider = "postgres"
+				cfg.Index.Embedder.Model = "none"
+				cfg.Index.Embedder.Endpoint = "none"
+				cfg.Index.Store.Backend = "postgres"
+				cfg.Index.Embedder.Dimensions = openAI3SmallDimensions
 			default:
-				cfg.Embedder.Provider = "ollama"
+				cfg.Index.Embedder.Provider = "ollama"
 			}
 		} else {
-			cfg.Embedder.Provider = initProvider
+			cfg.Index.Embedder.Provider = initProvider
 			switch initProvider {
 			case "lmstudio":
-				cfg.Embedder.Model = "text-embedding-nomic-embed-text-v1.5"
-				cfg.Embedder.Endpoint = "http://127.0.0.1:1234"
-				cfg.Embedder.Dimensions = lmStudioEmbeddingDimensions
+				cfg.Index.Embedder.Model = "text-embedding-nomic-embed-text-v1.5"
+				cfg.Index.Embedder.Endpoint = "http://127.0.0.1:1234"
+				cfg.Index.Embedder.Dimensions = lmStudioEmbeddingDimensions
 			case "openai":
-				cfg.Embedder.Model = "text-embedding-3-small"
-				cfg.Embedder.Endpoint = "https://api.openai.com/v1"
+				cfg.Index.Embedder.Model = "text-embedding-3-small"
+				cfg.Index.Embedder.Endpoint = "https://api.openai.com/v1"
 			case "postgres":
-				cfg.Embedder.Model = "none"
-				cfg.Embedder.Endpoint = "none"
-				cfg.Store.Backend = "postgres"
-				cfg.Embedder.Dimensions = openAI3SmallDimensions
+				cfg.Index.Embedder.Model = "none"
+				cfg.Index.Embedder.Endpoint = "none"
+				cfg.Index.Store.Backend = "postgres"
+				cfg.Index.Embedder.Dimensions = openAI3SmallDimensions
 			}
 		}
 
 		// Backend selection (skip if postgres provider was selected - it forces postgres backend)
-		if initBackend == "" && cfg.Embedder.Provider != "postgres" {
+		if initBackend == "" && cfg.Index.Embedder.Provider != "postgres" {
 			fmt.Println("\nSelect storage backend:")
 			fmt.Println("  1) gob (local file, recommended for most projects)")
 			fmt.Println("  2) postgres (pgvector, for large monorepos or shared index)")
@@ -121,33 +121,33 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 			switch input {
 			case "2", "postgres":
-				cfg.Store.Backend = "postgres"
+				cfg.Index.Store.Backend = "postgres"
 				fmt.Print("PostgreSQL DSN: ")
 				dsn, _ := reader.ReadString('\n')
-				cfg.Store.Postgres.DSN = strings.TrimSpace(dsn)
+				cfg.Index.Store.Postgres.DSN = strings.TrimSpace(dsn)
 			default:
-				cfg.Store.Backend = "gob"
+				cfg.Index.Store.Backend = "gob"
 			}
-		} else if cfg.Embedder.Provider == "postgres" {
+		} else if cfg.Index.Embedder.Provider == "postgres" {
 			// PostgreSQL FTS requires PostgreSQL backend
 			fmt.Print("\nPostgreSQL DSN (required for FTS): ")
 			dsn, _ := reader.ReadString('\n')
-			cfg.Store.Postgres.DSN = strings.TrimSpace(dsn)
+			cfg.Index.Store.Postgres.DSN = strings.TrimSpace(dsn)
 		} else {
-			cfg.Store.Backend = initBackend
+			cfg.Index.Store.Backend = initBackend
 		}
 	} else {
 		// Non-interactive with flags
 		if initProvider != "" {
-			cfg.Embedder.Provider = initProvider
+			cfg.Index.Embedder.Provider = initProvider
 			if initProvider == "postgres" {
-				cfg.Embedder.Model = "none"
-				cfg.Embedder.Endpoint = "none"
-				cfg.Store.Backend = "postgres"
+				cfg.Index.Embedder.Model = "none"
+				cfg.Index.Embedder.Endpoint = "none"
+				cfg.Index.Store.Backend = "postgres"
 			}
 		}
 		if initBackend != "" {
-			cfg.Store.Backend = initBackend
+			cfg.Index.Store.Backend = initBackend
 		}
 	}
 
@@ -173,14 +173,14 @@ func runInit(cmd *cobra.Command, args []string) error {
 	fmt.Println("  1. Start the indexing daemon: agentdx watch")
 	fmt.Println("  2. Search your code: agentdx search \"your query\"")
 
-	switch cfg.Embedder.Provider {
+	switch cfg.Index.Embedder.Provider {
 	case "ollama":
 		fmt.Println("\nMake sure Ollama is running with the nomic-embed-text model:")
 		fmt.Println("  ollama pull nomic-embed-text")
 	case "lmstudio":
 		fmt.Println("\nMake sure LM Studio is running with an embedding model loaded.")
-		fmt.Printf("  Model: %s\n", cfg.Embedder.Model)
-		fmt.Printf("  Endpoint: %s\n", cfg.Embedder.Endpoint)
+		fmt.Printf("  Model: %s\n", cfg.Index.Embedder.Model)
+		fmt.Printf("  Endpoint: %s\n", cfg.Index.Embedder.Endpoint)
 	case "openai":
 		fmt.Println("\nMake sure OPENAI_API_KEY is set in your environment.")
 	case "postgres":

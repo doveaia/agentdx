@@ -149,7 +149,7 @@ func (s *Server) handleSearch(ctx context.Context, request mcp.CallToolRequest) 
 	defer st.Close()
 
 	// Create searcher and search
-	searcher := search.NewSearcher(st, emb, cfg.Search)
+	searcher := search.NewSearcher(st, emb, cfg.Index.Search)
 	results, err := searcher.Search(ctx, query, limit)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("search failed: %v", err)), nil
@@ -397,8 +397,8 @@ func (s *Server) handleIndexStatus(ctx context.Context, _ mcp.CallToolRequest) (
 		TotalChunks:  stats.TotalChunks,
 		IndexSize:    formatBytes(stats.IndexSize),
 		LastUpdated:  stats.LastUpdated.Format("2006-01-02 15:04:05"),
-		Provider:     cfg.Embedder.Provider,
-		Model:        cfg.Embedder.Model,
+		Provider:     cfg.Index.Embedder.Provider,
+		Model:        cfg.Index.Embedder.Model,
 		SymbolsReady: symbolsReady,
 	}
 
@@ -412,34 +412,34 @@ func (s *Server) handleIndexStatus(ctx context.Context, _ mcp.CallToolRequest) (
 
 // createEmbedder creates an embedder based on configuration.
 func (s *Server) createEmbedder(cfg *config.Config) (embedder.Embedder, error) {
-	switch cfg.Embedder.Provider {
+	switch cfg.Index.Embedder.Provider {
 	case "ollama":
 		return embedder.NewOllamaEmbedder(
-			embedder.WithOllamaEndpoint(cfg.Embedder.Endpoint),
-			embedder.WithOllamaModel(cfg.Embedder.Model),
-			embedder.WithOllamaDimensions(cfg.Embedder.Dimensions),
+			embedder.WithOllamaEndpoint(cfg.Index.Embedder.Endpoint),
+			embedder.WithOllamaModel(cfg.Index.Embedder.Model),
+			embedder.WithOllamaDimensions(cfg.Index.Embedder.Dimensions),
 		), nil
 	case "openai":
 		return embedder.NewOpenAIEmbedder(
-			embedder.WithOpenAIModel(cfg.Embedder.Model),
-			embedder.WithOpenAIKey(cfg.Embedder.APIKey),
-			embedder.WithOpenAIEndpoint(cfg.Embedder.Endpoint),
-			embedder.WithOpenAIDimensions(cfg.Embedder.Dimensions),
+			embedder.WithOpenAIModel(cfg.Index.Embedder.Model),
+			embedder.WithOpenAIKey(cfg.Index.Embedder.APIKey),
+			embedder.WithOpenAIEndpoint(cfg.Index.Embedder.Endpoint),
+			embedder.WithOpenAIDimensions(cfg.Index.Embedder.Dimensions),
 		)
 	case "lmstudio":
 		return embedder.NewLMStudioEmbedder(
-			embedder.WithLMStudioEndpoint(cfg.Embedder.Endpoint),
-			embedder.WithLMStudioModel(cfg.Embedder.Model),
-			embedder.WithLMStudioDimensions(cfg.Embedder.Dimensions),
+			embedder.WithLMStudioEndpoint(cfg.Index.Embedder.Endpoint),
+			embedder.WithLMStudioModel(cfg.Index.Embedder.Model),
+			embedder.WithLMStudioDimensions(cfg.Index.Embedder.Dimensions),
 		), nil
 	default:
-		return nil, fmt.Errorf("unknown embedding provider: %s", cfg.Embedder.Provider)
+		return nil, fmt.Errorf("unknown embedding provider: %s", cfg.Index.Embedder.Provider)
 	}
 }
 
 // createStore creates a vector store based on configuration.
 func (s *Server) createStore(ctx context.Context, cfg *config.Config) (store.VectorStore, error) {
-	switch cfg.Store.Backend {
+	switch cfg.Index.Store.Backend {
 	case "gob":
 		indexPath := config.GetIndexPath(s.projectRoot)
 		gobStore := store.NewGOBStore(indexPath)
@@ -448,9 +448,9 @@ func (s *Server) createStore(ctx context.Context, cfg *config.Config) (store.Vec
 		}
 		return gobStore, nil
 	case "postgres":
-		return store.NewPostgresStore(ctx, cfg.Store.Postgres.DSN, s.projectRoot, cfg.Embedder.Dimensions)
+		return store.NewPostgresStore(ctx, cfg.Index.Store.Postgres.DSN, s.projectRoot, cfg.Index.Embedder.Dimensions)
 	default:
-		return nil, fmt.Errorf("unknown storage backend: %s", cfg.Store.Backend)
+		return nil, fmt.Errorf("unknown storage backend: %s", cfg.Index.Store.Backend)
 	}
 }
 

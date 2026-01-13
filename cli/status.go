@@ -183,7 +183,7 @@ func (m model) viewStats() string {
 	}
 
 	sb.WriteString(normalStyle.Render("Provider:         "))
-	sb.WriteString(fmt.Sprintf("%s (%s)\n", m.cfg.Embedder.Provider, m.cfg.Embedder.Model))
+	sb.WriteString(fmt.Sprintf("%s (%s)\n", m.cfg.Index.Embedder.Provider, m.cfg.Index.Embedder.Model))
 
 	sb.WriteString("\n")
 	sb.WriteString(helpStyle.Render("[Enter] Browse files  [q] Quit"))
@@ -314,7 +314,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 
 	// Initialize store
 	var st store.VectorStore
-	switch cfg.Store.Backend {
+	switch cfg.Index.Store.Backend {
 	case "gob":
 		indexPath := config.GetIndexPath(projectRoot)
 		gobStore := store.NewGOBStore(indexPath)
@@ -324,12 +324,12 @@ func runStatus(cmd *cobra.Command, args []string) error {
 		st = gobStore
 	case "postgres":
 		var err error
-		st, err = store.NewPostgresStore(ctx, cfg.Store.Postgres.DSN, projectRoot, cfg.Embedder.Dimensions)
+		st, err = store.NewPostgresStore(ctx, cfg.Index.Store.Postgres.DSN, projectRoot, cfg.Index.Embedder.Dimensions)
 		if err != nil {
 			return fmt.Errorf("failed to connect to postgres: %w", err)
 		}
 	default:
-		return fmt.Errorf("unknown storage backend: %s", cfg.Store.Backend)
+		return fmt.Errorf("unknown storage backend: %s", cfg.Index.Store.Backend)
 	}
 	defer st.Close()
 

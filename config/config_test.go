@@ -18,32 +18,32 @@ func TestDefaultConfig(t *testing.T) {
 		t.Errorf("expected version 1, got %d", cfg.Version)
 	}
 
-	if cfg.Embedder.Provider != "ollama" {
-		t.Errorf("expected provider ollama, got %s", cfg.Embedder.Provider)
+	if cfg.Index.Embedder.Provider != "ollama" {
+		t.Errorf("expected provider ollama, got %s", cfg.Index.Embedder.Provider)
 	}
 
-	if cfg.Embedder.Model != "nomic-embed-text" {
-		t.Errorf("expected model nomic-embed-text, got %s", cfg.Embedder.Model)
+	if cfg.Index.Embedder.Model != "nomic-embed-text" {
+		t.Errorf("expected model nomic-embed-text, got %s", cfg.Index.Embedder.Model)
 	}
 
-	if cfg.Embedder.Dimensions != 768 {
-		t.Errorf("expected dimensions 768, got %d", cfg.Embedder.Dimensions)
+	if cfg.Index.Embedder.Dimensions != 768 {
+		t.Errorf("expected dimensions 768, got %d", cfg.Index.Embedder.Dimensions)
 	}
 
-	if cfg.Store.Backend != "gob" {
-		t.Errorf("expected backend gob, got %s", cfg.Store.Backend)
+	if cfg.Index.Store.Backend != "gob" {
+		t.Errorf("expected backend gob, got %s", cfg.Index.Store.Backend)
 	}
 
-	if cfg.Chunking.Size != 512 {
-		t.Errorf("expected chunk size 512, got %d", cfg.Chunking.Size)
+	if cfg.Index.Chunking.Size != 512 {
+		t.Errorf("expected chunk size 512, got %d", cfg.Index.Chunking.Size)
 	}
 
-	if cfg.Chunking.Overlap != 50 {
-		t.Errorf("expected chunk overlap 50, got %d", cfg.Chunking.Overlap)
+	if cfg.Index.Chunking.Overlap != 50 {
+		t.Errorf("expected chunk overlap 50, got %d", cfg.Index.Chunking.Overlap)
 	}
 
-	if cfg.Watch.DebounceMs != 500 {
-		t.Errorf("expected debounce 500ms, got %d", cfg.Watch.DebounceMs)
+	if cfg.Index.Watch.DebounceMs != 500 {
+		t.Errorf("expected debounce 500ms, got %d", cfg.Index.Watch.DebounceMs)
 	}
 }
 
@@ -51,10 +51,10 @@ func TestConfigSaveAndLoad(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	cfg := DefaultConfig()
-	cfg.Embedder.Provider = "openai"
-	cfg.Embedder.Dimensions = dimensions
-	cfg.Embedder.Endpoint = endpoints
-	cfg.Store.Backend = "postgres"
+	cfg.Index.Embedder.Provider = "openai"
+	cfg.Index.Embedder.Dimensions = dimensions
+	cfg.Index.Embedder.Endpoint = endpoints
+	cfg.Index.Store.Backend = "postgres"
 
 	err := cfg.Save(tmpDir)
 	if err != nil {
@@ -73,19 +73,19 @@ func TestConfigSaveAndLoad(t *testing.T) {
 		t.Fatalf("failed to load config: %v", err)
 	}
 
-	if loaded.Embedder.Provider != "openai" {
-		t.Errorf("expected provider openai, got %s", loaded.Embedder.Provider)
+	if loaded.Index.Embedder.Provider != "openai" {
+		t.Errorf("expected provider openai, got %s", loaded.Index.Embedder.Provider)
 	}
 
-	if loaded.Embedder.Dimensions != dimensions {
-		t.Errorf("expected dimensions %d, got %d", dimensions, loaded.Embedder.Dimensions)
+	if loaded.Index.Embedder.Dimensions != dimensions {
+		t.Errorf("expected dimensions %d, got %d", dimensions, loaded.Index.Embedder.Dimensions)
 	}
 
-	if loaded.Store.Backend != "postgres" {
-		t.Errorf("expected backend postgres, got %s", loaded.Store.Backend)
+	if loaded.Index.Store.Backend != "postgres" {
+		t.Errorf("expected backend postgres, got %s", loaded.Index.Store.Backend)
 	}
-	if loaded.Embedder.Endpoint != endpoints {
-		t.Errorf("expected endpoint %s, got %s", endpoints, loaded.Embedder.Endpoint)
+	if loaded.Index.Embedder.Endpoint != endpoints {
+		t.Errorf("expected endpoint %s, got %s", endpoints, loaded.Index.Embedder.Endpoint)
 	}
 }
 
@@ -230,12 +230,12 @@ store:
 				t.Fatalf("failed to load config: %v", err)
 			}
 
-			if loaded.Embedder.Endpoint != tt.expectedEndpoint {
-				t.Errorf("expected endpoint %s, got %s", tt.expectedEndpoint, loaded.Embedder.Endpoint)
+			if loaded.Index.Embedder.Endpoint != tt.expectedEndpoint {
+				t.Errorf("expected endpoint %s, got %s", tt.expectedEndpoint, loaded.Index.Embedder.Endpoint)
 			}
 
-			if loaded.Embedder.Dimensions != tt.expectedDimensions {
-				t.Errorf("expected dimensions %d, got %d", tt.expectedDimensions, loaded.Embedder.Dimensions)
+			if loaded.Index.Embedder.Dimensions != tt.expectedDimensions {
+				t.Errorf("expected dimensions %d, got %d", tt.expectedDimensions, loaded.Index.Embedder.Dimensions)
 			}
 		})
 	}

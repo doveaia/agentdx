@@ -84,42 +84,42 @@ func runSearch(cmd *cobra.Command, args []string) error {
 
 	// Initialize embedder
 	var emb embedder.Embedder
-	switch cfg.Embedder.Provider {
+	switch cfg.Index.Embedder.Provider {
 	case "ollama":
 		emb = embedder.NewOllamaEmbedder(
-			embedder.WithOllamaEndpoint(cfg.Embedder.Endpoint),
-			embedder.WithOllamaModel(cfg.Embedder.Model),
-			embedder.WithOllamaDimensions(cfg.Embedder.Dimensions),
+			embedder.WithOllamaEndpoint(cfg.Index.Embedder.Endpoint),
+			embedder.WithOllamaModel(cfg.Index.Embedder.Model),
+			embedder.WithOllamaDimensions(cfg.Index.Embedder.Dimensions),
 		)
 	case "openai":
 		var err error
 		emb, err = embedder.NewOpenAIEmbedder(
-			embedder.WithOpenAIModel(cfg.Embedder.Model),
-			embedder.WithOpenAIKey(cfg.Embedder.APIKey),
-			embedder.WithOpenAIEndpoint(cfg.Embedder.Endpoint),
-			embedder.WithOpenAIDimensions(cfg.Embedder.Dimensions),
+			embedder.WithOpenAIModel(cfg.Index.Embedder.Model),
+			embedder.WithOpenAIKey(cfg.Index.Embedder.APIKey),
+			embedder.WithOpenAIEndpoint(cfg.Index.Embedder.Endpoint),
+			embedder.WithOpenAIDimensions(cfg.Index.Embedder.Dimensions),
 		)
 		if err != nil {
 			return fmt.Errorf("failed to initialize OpenAI embedder: %w", err)
 		}
 	case "lmstudio":
 		emb = embedder.NewLMStudioEmbedder(
-			embedder.WithLMStudioEndpoint(cfg.Embedder.Endpoint),
-			embedder.WithLMStudioModel(cfg.Embedder.Model),
-			embedder.WithLMStudioDimensions(cfg.Embedder.Dimensions),
+			embedder.WithLMStudioEndpoint(cfg.Index.Embedder.Endpoint),
+			embedder.WithLMStudioModel(cfg.Index.Embedder.Model),
+			embedder.WithLMStudioDimensions(cfg.Index.Embedder.Dimensions),
 		)
 	case "postgres":
 		// PostgreSQL FTS doesn't need external embeddings
 		emb = embedder.NewPostgresFTSEmbedder()
 	default:
-		return fmt.Errorf("unknown embedding provider: %s", cfg.Embedder.Provider)
+		return fmt.Errorf("unknown embedding provider: %s", cfg.Index.Embedder.Provider)
 	}
 	defer emb.Close()
 
 	// Initialize store
 	var st store.VectorStore
 	var ftsStore *store.PostgresFTSStore
-	switch cfg.Store.Backend {
+	switch cfg.Index.Store.Backend {
 	case "gob":
 		indexPath := config.GetIndexPath(projectRoot)
 		gobStore := store.NewGOBStore(indexPath)
@@ -130,17 +130,17 @@ func runSearch(cmd *cobra.Command, args []string) error {
 	case "postgres":
 		var err error
 		// Use FTS store when postgres embedder is selected
-		if cfg.Embedder.Provider == "postgres" {
-			ftsStore, err = store.NewPostgresFTSStore(ctx, cfg.Store.Postgres.DSN, projectRoot)
+		if cfg.Index.Embedder.Provider == "postgres" {
+			ftsStore, err = store.NewPostgresFTSStore(ctx, cfg.Index.Store.Postgres.DSN, projectRoot)
 			st = ftsStore
 		} else {
-			st, err = store.NewPostgresStore(ctx, cfg.Store.Postgres.DSN, projectRoot,cfg.Embedder.Dimensions)
+			st, err = store.NewPostgresStore(ctx, cfg.Index.Store.Postgres.DSN, projectRoot,cfg.Index.Embedder.Dimensions)
 		}
 		if err != nil {
 			return fmt.Errorf("failed to connect to postgres: %w", err)
 		}
 	default:
-		return fmt.Errorf("unknown storage backend: %s", cfg.Store.Backend)
+		return fmt.Errorf("unknown storage backend: %s", cfg.Index.Store.Backend)
 	}
 	defer st.Close()
 
@@ -156,14 +156,14 @@ func runSearch(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("search failed: %w", err)
 		}
 		// Apply structural boosting
-		results = search.ApplyBoost(results, cfg.Search.Boost)
+		results = search.ApplyBoost(results, cfg.Index.Search.Boost)
 		// Trim to requested limit
 		if len(results) > searchLimit {
 			results = results[:searchLimit]
 		}
 	} else {
 		// Create searcher with boost config
-		searcher := search.NewSearcher(st, emb, cfg.Search)
+		searcher := search.NewSearcher(st, emb, cfg.Index.Search)
 		// Search with boosting
 		results, err = searcher.Search(ctx, query, searchLimit)
 	}
@@ -275,35 +275,35 @@ func SearchJSON(projectRoot string, query string, limit int) ([]store.SearchResu
 	}
 
 	var emb embedder.Embedder
-	switch cfg.Embedder.Provider {
+	switch cfg.Index.Embedder.Provider {
 	case "ollama":
 		emb = embedder.NewOllamaEmbedder(
-			embedder.WithOllamaEndpoint(cfg.Embedder.Endpoint),
-			embedder.WithOllamaModel(cfg.Embedder.Model),
+			embedder.WithOllamaEndpoint(cfg.Index.Embedder.Endpoint),
+			embedder.WithOllamaModel(cfg.Index.Embedder.Model),
 		)
 	case "openai":
 		var err error
 		emb, err = embedder.NewOpenAIEmbedder(
-			embedder.WithOpenAIModel(cfg.Embedder.Model),
+			embedder.WithOpenAIModel(cfg.Index.Embedder.Model),
 		)
 		if err != nil {
 			return nil, err
 		}
 	case "lmstudio":
 		emb = embedder.NewLMStudioEmbedder(
-			embedder.WithLMStudioEndpoint(cfg.Embedder.Endpoint),
-			embedder.WithLMStudioModel(cfg.Embedder.Model),
+			embedder.WithLMStudioEndpoint(cfg.Index.Embedder.Endpoint),
+			embedder.WithLMStudioModel(cfg.Index.Embedder.Model),
 		)
 	case "postgres":
 		emb = embedder.NewPostgresFTSEmbedder()
 	default:
-		return nil, fmt.Errorf("unknown provider: %s", cfg.Embedder.Provider)
+		return nil, fmt.Errorf("unknown provider: %s", cfg.Index.Embedder.Provider)
 	}
 	defer emb.Close()
 
 	var st store.VectorStore
 	var ftsStore *store.PostgresFTSStore
-	switch cfg.Store.Backend {
+	switch cfg.Index.Store.Backend {
 	case "gob":
 		gobStore := store.NewGOBStore(config.GetIndexPath(projectRoot))
 		if err := gobStore.Load(ctx); err != nil {
@@ -312,11 +312,11 @@ func SearchJSON(projectRoot string, query string, limit int) ([]store.SearchResu
 		st = gobStore
 	case "postgres":
 		var err error
-		if cfg.Embedder.Provider == "postgres" {
-			ftsStore, err = store.NewPostgresFTSStore(ctx, cfg.Store.Postgres.DSN, projectRoot)
+		if cfg.Index.Embedder.Provider == "postgres" {
+			ftsStore, err = store.NewPostgresFTSStore(ctx, cfg.Index.Store.Postgres.DSN, projectRoot)
 			st = ftsStore
 		} else {
-			st, err = store.NewPostgresStore(ctx, cfg.Store.Postgres.DSN, projectRoot,cfg.Embedder.Dimensions)
+			st, err = store.NewPostgresStore(ctx, cfg.Index.Store.Postgres.DSN, projectRoot,cfg.Index.Embedder.Dimensions)
 		}
 		if err != nil {
 			return nil, err
@@ -330,7 +330,7 @@ func SearchJSON(projectRoot string, query string, limit int) ([]store.SearchResu
 		if err != nil {
 			return nil, err
 		}
-		results = search.ApplyBoost(results, cfg.Search.Boost)
+		results = search.ApplyBoost(results, cfg.Index.Search.Boost)
 		if len(results) > limit {
 			results = results[:limit]
 		}
@@ -338,7 +338,7 @@ func SearchJSON(projectRoot string, query string, limit int) ([]store.SearchResu
 	}
 
 	// Create searcher with boost config
-	searcher := search.NewSearcher(st, emb, cfg.Search)
+	searcher := search.NewSearcher(st, emb, cfg.Index.Search)
 
 	return searcher.Search(ctx, query, limit)
 }

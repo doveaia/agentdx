@@ -16,7 +16,10 @@ const (
 )
 
 type Config struct {
-	Version  int            `yaml:"version"`
+	Version int          `yaml:"version"`
+	Index   IndexSection `yaml:"index"`
+}
+type IndexSection struct {
 	Embedder EmbedderConfig `yaml:"embedder"`
 	Store    StoreConfig    `yaml:"store"`
 	Chunking ChunkingConfig `yaml:"chunking"`
@@ -88,95 +91,97 @@ type TraceConfig struct {
 func DefaultConfig() *Config {
 	return &Config{
 		Version: 1,
-		Embedder: EmbedderConfig{
-			Provider:   "ollama",
-			Model:      "nomic-embed-text",
-			Endpoint:   "http://localhost:11434",
-			Dimensions: 768,
-		},
-		Store: StoreConfig{
-			Backend: "gob",
-		},
-		Chunking: ChunkingConfig{
-			Size:    512,
-			Overlap: 50,
-		},
-		Watch: WatchConfig{
-			DebounceMs: 500,
-		},
-		Search: SearchConfig{
-			Hybrid: HybridConfig{
-				Enabled: false,
-				K:       60,
+		Index: IndexSection{
+			Embedder: EmbedderConfig{
+				Provider:   "ollama",
+				Model:      "nomic-embed-text",
+				Endpoint:   "http://localhost:11434",
+				Dimensions: 768,
 			},
-			Boost: BoostConfig{
-				Enabled: true,
-				Penalties: []BoostRule{
-					// Test files (multi-language)
-					{Pattern: "/tests/", Factor: 0.5},
-					{Pattern: "/test/", Factor: 0.5},
-					{Pattern: "__tests__", Factor: 0.5},
-					{Pattern: "_test.", Factor: 0.5},
-					{Pattern: ".test.", Factor: 0.5},
-					{Pattern: ".spec.", Factor: 0.5},
-					{Pattern: "test_", Factor: 0.5},
-					// Mocks
-					{Pattern: "/mocks/", Factor: 0.4},
-					{Pattern: "/mock/", Factor: 0.4},
-					{Pattern: ".mock.", Factor: 0.4},
-					// Fixtures & test data
-					{Pattern: "/fixtures/", Factor: 0.4},
-					{Pattern: "/testdata/", Factor: 0.4},
-					// Generated code
-					{Pattern: "/generated/", Factor: 0.4},
-					{Pattern: ".generated.", Factor: 0.4},
-					{Pattern: ".gen.", Factor: 0.4},
-					// Documentation
-					{Pattern: ".md", Factor: 0.6},
-					{Pattern: "/docs/", Factor: 0.6},
+			Store: StoreConfig{
+				Backend: "gob",
+			},
+			Chunking: ChunkingConfig{
+				Size:    512,
+				Overlap: 50,
+			},
+			Watch: WatchConfig{
+				DebounceMs: 500,
+			},
+			Search: SearchConfig{
+				Hybrid: HybridConfig{
+					Enabled: false,
+					K:       60,
 				},
-				Bonuses: []BoostRule{
-					// Entry points (multi-language)
-					{Pattern: "/src/", Factor: 1.1},
-					{Pattern: "/lib/", Factor: 1.1},
-					{Pattern: "/app/", Factor: 1.1},
+				Boost: BoostConfig{
+					Enabled: true,
+					Penalties: []BoostRule{
+						// Test files (multi-language)
+						{Pattern: "/tests/", Factor: 0.5},
+						{Pattern: "/test/", Factor: 0.5},
+						{Pattern: "__tests__", Factor: 0.5},
+						{Pattern: "_test.", Factor: 0.5},
+						{Pattern: ".test.", Factor: 0.5},
+						{Pattern: ".spec.", Factor: 0.5},
+						{Pattern: "test_", Factor: 0.5},
+						// Mocks
+						{Pattern: "/mocks/", Factor: 0.4},
+						{Pattern: "/mock/", Factor: 0.4},
+						{Pattern: ".mock.", Factor: 0.4},
+						// Fixtures & test data
+						{Pattern: "/fixtures/", Factor: 0.4},
+						{Pattern: "/testdata/", Factor: 0.4},
+						// Generated code
+						{Pattern: "/generated/", Factor: 0.4},
+						{Pattern: ".generated.", Factor: 0.4},
+						{Pattern: ".gen.", Factor: 0.4},
+						// Documentation
+						{Pattern: ".md", Factor: 0.6},
+						{Pattern: "/docs/", Factor: 0.6},
+					},
+					Bonuses: []BoostRule{
+						// Entry points (multi-language)
+						{Pattern: "/src/", Factor: 1.1},
+						{Pattern: "/lib/", Factor: 1.1},
+						{Pattern: "/app/", Factor: 1.1},
+					},
 				},
 			},
-		},
-		Trace: TraceConfig{
-			Mode: "fast",
-			EnabledLanguages: []string{
-				".go", ".js", ".ts", ".jsx", ".tsx", ".py", ".php",
-				".c", ".h", ".cpp", ".hpp", ".cc", ".cxx",
-				".rs", ".zig",
+			Trace: TraceConfig{
+				Mode: "fast",
+				EnabledLanguages: []string{
+					".go", ".js", ".ts", ".jsx", ".tsx", ".py", ".php",
+					".c", ".h", ".cpp", ".hpp", ".cc", ".cxx",
+					".rs", ".zig",
+				},
+				ExcludePatterns: []string{
+					"*_test.go",
+					"*.spec.ts",
+					"*.spec.js",
+					"*.test.ts",
+					"*.test.js",
+					"__tests__/*",
+				},
 			},
-			ExcludePatterns: []string{
-				"*_test.go",
-				"*.spec.ts",
-				"*.spec.js",
-				"*.test.ts",
-				"*.test.js",
-				"__tests__/*",
+			Update: UpdateConfig{
+				CheckOnStartup: false, // Opt-in by default for privacy
 			},
-		},
-		Update: UpdateConfig{
-			CheckOnStartup: false, // Opt-in by default for privacy
-		},
-		Ignore: []string{
-			".git",
-			".agentdx",
-			"node_modules",
-			"vendor",
-			"bin",
-			"dist",
-			"__pycache__",
-			".venv",
-			"venv",
-			".idea",
-			".vscode",
-			"target",
-			".zig-cache",
-			"zig-out",
+			Ignore: []string{
+				".git",
+				".agentdx",
+				"node_modules",
+				"vendor",
+				"bin",
+				"dist",
+				"__pycache__",
+				".venv",
+				"venv",
+				".idea",
+				".vscode",
+				"target",
+				".zig-cache",
+				"zig-out",
+			},
 		},
 	}
 }
@@ -223,43 +228,43 @@ func (c *Config) applyDefaults() {
 	defaults := DefaultConfig()
 
 	// Embedder defaults
-	if c.Embedder.Endpoint == "" {
-		switch c.Embedder.Provider {
+	if c.Index.Embedder.Endpoint == "" {
+		switch 	c.Index.Embedder.Provider {
 		case "ollama":
-			c.Embedder.Endpoint = "http://localhost:11434"
+			c.Index.Embedder.Endpoint = "http://localhost:11434"
 		case "lmstudio":
-			c.Embedder.Endpoint = "http://127.0.0.1:1234"
+			c.Index.Embedder.Endpoint = "http://127.0.0.1:1234"
 		case "openai":
-			c.Embedder.Endpoint = "https://api.openai.com/v1"
+			c.Index.Embedder.Endpoint = "https://api.openai.com/v1"
 		default:
-			c.Embedder.Endpoint = defaults.Embedder.Endpoint
+			c.Index.Embedder.Endpoint = defaults.Index.Embedder.Endpoint
 		}
 	}
 
-	if c.Embedder.Dimensions == 0 {
-		switch c.Embedder.Provider {
+	if c.Index.Embedder.Dimensions == 0 {
+		switch c.Index.Embedder.Provider {
 		case "ollama":
-			c.Embedder.Dimensions = 768 // nomic-embed-text default
+			c.Index.Embedder.Dimensions = 768 // nomic-embed-text default
 		case "lmstudio":
-			c.Embedder.Dimensions = 768 // nomic default
+			c.Index.Embedder.Dimensions = 768 // nomic default
 		case "openai":
-			c.Embedder.Dimensions = 1536 // text-embedding-3-small default
+			c.Index.Embedder.Dimensions = 1536 // text-embedding-3-small default
 		default:
-			c.Embedder.Dimensions = defaults.Embedder.Dimensions
+			c.Index.Embedder.Dimensions = defaults.Index.Embedder.Dimensions
 		}
 	}
 
 	// Chunking defaults
-	if c.Chunking.Size == 0 {
-		c.Chunking.Size = defaults.Chunking.Size
+	if c.Index.Chunking.Size == 0 {
+		c.Index.Chunking.Size = defaults.Index.Chunking.Size
 	}
-	if c.Chunking.Overlap == 0 {
-		c.Chunking.Overlap = defaults.Chunking.Overlap
+	if c.Index.Chunking.Overlap == 0 {
+		c.Index.Chunking.Overlap = defaults.Index.Chunking.Overlap
 	}
 
 	// Watch defaults
-	if c.Watch.DebounceMs == 0 {
-		c.Watch.DebounceMs = defaults.Watch.DebounceMs
+	if c.Index.Watch.DebounceMs == 0 {
+		c.Index.Watch.DebounceMs = defaults.Index.Watch.DebounceMs
 	}
 }
 
@@ -315,12 +320,12 @@ func FindProjectRoot() (string, error) {
 // When postgres provider is selected, embedder.model and embedder.endpoint
 // must be set to "none" since PostgreSQL FTS doesn't use embeddings.
 func (c *Config) Validate() error {
-	if c.Embedder.Provider == "postgres" {
-		if c.Embedder.Model != "none" {
-			return fmt.Errorf("embedder.model must be set to 'none' when using postgres provider (current: %q)", c.Embedder.Model)
+	if c.Index.Embedder.Provider == "postgres" {
+		if c.Index.Embedder.Model != "none" {
+			return fmt.Errorf("embedder.model must be set to 'none' when using postgres provider (current: %q)", c.Index.Embedder.Model)
 		}
-		if c.Embedder.Endpoint != "none" {
-			return fmt.Errorf("embedder.endpoint must be set to 'none' when using postgres provider (current: %q)", c.Embedder.Endpoint)
+		if c.Index.Embedder.Endpoint != "none" {
+			return fmt.Errorf("embedder.endpoint must be set to 'none' when using postgres provider (current: %q)", c.Index.Embedder.Endpoint)
 		}
 	}
 	return nil
