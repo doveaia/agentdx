@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 FEATURE: Add Mode field to Config struct ("local" or "remote")
 FEATURE: Create localsetup package with DockerClient and DatabaseClient interfaces
 FEATURE: Add ToSlug function for database-safe name conversion
+FEATURE: Implement Docker container management (IsDockerAvailable, ContainerExists, ContainerRunning, CreateContainer, StartContainer)
 
 ## [0.14.0] - 2026-01-12
 
