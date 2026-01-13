@@ -8,7 +8,7 @@ subtasks:
   - "T016"
 title: "Integration Tests"
 phase: "Phase 4 - Validation"
-lane: "doing"
+lane: "done"
 assignee: ""
 agent: "claude"
 shell_pid: "27793"
@@ -494,3 +494,4 @@ go test -short ./localsetup/...
 ## Activity Log
 
 - 2026-01-13T15:30:00Z – system – lane=planned – Prompt created.
+- 2026-01-13T22:01:52Z – claude – shell_pid=27793 – lane=done – Review passed - all acceptance criteria met

@@ -4,7 +4,7 @@ subtasks:
   - "T005"
 title: "Docker Container Management"
 phase: "Phase 2 - Core Implementation"
-lane: "for_review"
+lane: "done"
 assignee: ""
 agent: "claude"
 shell_pid: "56255"
@@ -244,3 +244,5 @@ func DefaultContainerConfig() ContainerConfig {
 - 2026-01-13T15:30:00Z – system – lane=planned – Prompt created.
 - 2026-01-13T16:08:41Z – claude – shell_pid=55216 – lane=doing – Started implementation
 - 2026-01-13T16:10:08Z – claude – shell_pid=56255 – lane=for_review – Ready for review
+- 2026-01-13T22:01:40Z – claude – lane=doing – Started review via workflow command
+- 2026-01-13T22:01:51Z – claude – shell_pid=56255 – lane=done – Review passed - all acceptance criteria met
