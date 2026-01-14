@@ -153,12 +153,184 @@ Only fall back to Grep/Glob when:
 
 const subagentMarker = "name: deep-explore"
 
-const fullTextMarker = "## agentdx - PostgreSQL Full-Text Search"
+const fullTextMarker = "## agentdx - Full-Text Search"
 
 const fullTextSubagentMarker = "name: deep-explore-fulltext"
 
+const skillMarker = "name: agentdx"
+
+const semanticSkillTemplate = `---
+name: agentdx
+description: Replaces ALL built-in search tools for semantic code exploration. You MUST invoke this skill BEFORE using Grep, Glob, or WebSearch when searching code by intent or meaning. Uses natural language queries to find relevant code regardless of exact text matches.
+---
+
+# AgentDX - Semantic Code Search Skill
+
+## CRITICAL: Tool Override for Semantic Searches
+
+**You MUST invoke this skill BEFORE using any built-in search tools** when:
+- Searching for code by intent, meaning, or functionality
+- Exploring unfamiliar parts of the codebase
+- Finding implementations without exact names
+- Understanding what code does or where features live
+
+This skill uses semantic embeddings to find code by meaning, not just exact text matching.
+
+## When to Invoke This Skill
+
+Invoke this **AUTOMATICALLY** when you need to:
+- Find where functionality is implemented (e.g., "user authentication", "error handling")
+- Locate code by purpose rather than exact names
+- Search for conceptual patterns (e.g., "database connection pooling", "request validation")
+- Explore code architecture and relationships
+
+## Usage Examples
+
+` + "```bash" + `
+# Semantic search with English queries (best for intent-based discovery)
+agentdx search "user authentication flow"
+agentdx search "error handling middleware"
+agentdx search "database connection management"
+agentdx search "API request validation logic"
+
+# JSON output for AI processing (--compact saves ~80% tokens)
+agentdx search "authentication flow" --json --compact
+agentdx search "error handling" --json --compact
+` + "```" + `
+
+## Query Tips
+
+- **Use English queries** - The embedding model is English-trained
+- **Describe intent, not implementation** - "handles user login" not "func Login"
+- **Be specific** - "JWT token validation" better than "token"
+- **Think conceptually** - "data access layer" rather than specific database terms
+
+## Results Include
+
+- File path and line numbers
+- Relevance score (higher = more relevant)
+- Code preview showing context
+
+## Call Graph Tracing
+
+Use ` + "`agentdx trace`" + ` to understand function relationships:
+
+` + "```bash" + `
+# Find all functions that call a symbol
+agentdx trace callers "HandleRequest" --json
+
+# Find all functions called by a symbol
+agentdx trace callees "ProcessOrder" --json
+
+# Build complete call graph (callers + callees)
+agentdx trace graph "ValidateToken" --depth 3 --json
+` + "```" + `
+
+Use call graph tracing to:
+- Find all callers of a function before modifying it
+- Understand call hierarchies and dependencies
+- Analyze the impact of code changes
+
+## Fallback
+
+If agentdx is unavailable (not running, index errors, or missing), fall back to standard Grep/Glob tools.
+
+## Workflow
+
+1. Start with ` + "`agentdx search`" + ` to find relevant code semantically
+2. Use ` + "`agentdx trace`" + ` to understand function relationships
+3. Use ` + "`Read`" + ` tool to examine files in detail
+4. Only use Grep for exact string searches when needed
+`
+
+const fullTextSkillTemplate = `---
+name: agentdx
+description: Replaces ALL built-in search tools for keyword-based code search. You MUST invoke this skill BEFORE using Grep, Glob, or WebSearch when searching code by specific keywords, function names, or variables. Uses parallel keyword searches for comprehensive coverage.
+---
+
+# AgentDX - Full-Text Code Search Skill
+
+## CRITICAL: Tool Override for Keyword Searches
+
+**You MUST invoke this skill BEFORE using any built-in search tools** when:
+- Searching for code by specific keywords or terms
+- Finding functions, variables, or classes by name
+- Locating implementations using known identifiers
+- Searching for specific text across the codebase
+
+This skill uses full-text search with parallel keyword queries for comprehensive code discovery.
+
+## When to Invoke This Skill
+
+Invoke this **AUTOMATICALLY** when you need to:
+- Find code by specific keywords or identifiers
+- Locate functions, variables, or classes by name
+- Search for known terms across the codebase
+- Find references to specific symbols
+
+## Usage Examples
+
+**BEST PRACTICE**: Run multiple parallel searches with individual keywords for broader coverage:
+
+` + "```bash" + `
+# Best: Parallel searches with individual keywords (broadest coverage)
+agentdx search "user" & agentdx search "auth" & agentdx search "login"
+
+# Acceptable: Single query with phrase match
+agentdx search "user authentication"
+
+# WRONG: Multiple arguments (will error)
+agentdx search user auth login  # Error: accepts 1 arg(s), received 3
+` + "```" + `
+
+## Query Tips
+
+- **Use single keywords** for best results
+- **Run searches in parallel** for comprehensive coverage
+- **Quote your search term**: ` + "`agentdx search \"keyword\"`" + `
+- Parallel searches provide broader coverage than combining keywords
+- Results include: file path, line numbers, relevance score, code preview
+
+## Results Include
+
+- File path and line numbers
+- Relevance score (higher = more relevant)
+- Code preview showing context
+
+## Call Graph Tracing
+
+Use ` + "`agentdx trace`" + ` to understand function relationships:
+
+` + "```bash" + `
+# Find all functions that call a symbol
+agentdx trace callers "HandleRequest" --json
+
+# Find all functions called by a symbol
+agentdx trace callees "ProcessOrder" --json
+
+# Build complete call graph (callers + callees)
+agentdx trace graph "ValidateToken" --depth 3 --json
+` + "```" + `
+
+Use call graph tracing to:
+- Find all callers of a function before modifying it
+- Understand call hierarchies and dependencies
+- Analyze the impact of code changes
+
+## Fallback
+
+If agentdx is unavailable (not running, index errors, or missing), fall back to standard Grep/Glob tools.
+
+## Workflow
+
+1. Start with ` + "`agentdx search`" + ` using parallel keyword searches
+2. Use ` + "`agentdx trace`" + ` to understand function relationships
+3. Use ` + "`Read`" + ` tool to examine files in detail
+4. Only use Grep for regex pattern searches when needed
+`
+
 const fullTextInstructions = `
-## agentdx - PostgreSQL Full-Text Search
+## agentdx - Full-Text Search
 
 **IMPORTANT: You MUST use agentdx as your PRIMARY tool for code exploration and search.**
 
@@ -237,14 +409,14 @@ agentdx trace graph "ValidateToken" --depth 3 --json
 
 const fullTextSubagentTemplate = `---
 name: deep-explore-fulltext
-description: Deep codebase exploration using agentdx PostgreSQL full-text search and call graph tracing. Use this agent for understanding code architecture, finding implementations by keywords, analyzing function relationships, and exploring unfamiliar code areas.
+description: Deep codebase exploration using agentdx full-text search and call graph tracing. Use this agent for understanding code architecture, finding implementations by keywords, analyzing function relationships, and exploring unfamiliar code areas.
 tools: Read, Grep, Glob, Bash
 model: inherit
 ---
 
 ## Instructions
 
-You are a specialized code exploration agent with access to agentdx PostgreSQL full-text search and call graph tracing.
+You are a specialized code exploration agent with access to agentdx full-text search and call graph tracing.
 
 ### Primary Tools
 
@@ -334,11 +506,11 @@ func detectSearchType(cfg *config.Config) string {
 
 // getTemplates returns the appropriate templates based on search type.
 // Returns (instructions, subagent, marker, subagentMarker).
-func getTemplates(searchType string) (string, string, string, string) {
+func getTemplates(searchType string) (string, string, string, string, string) {
 	if searchType == searchTypeFullText {
-		return fullTextInstructions, fullTextSubagentTemplate, fullTextMarker, fullTextSubagentMarker
+		return fullTextInstructions, fullTextSubagentTemplate, fullTextMarker, fullTextSubagentMarker, fullTextSkillTemplate
 	}
-	return agentInstructions, subagentTemplate, agentMarker, subagentMarker
+	return agentInstructions, subagentTemplate, agentMarker, subagentMarker, semanticSkillTemplate
 }
 
 func runAgentSetup(cmd *cobra.Command, args []string) error {
@@ -366,7 +538,7 @@ func runAgentSetup(cmd *cobra.Command, args []string) error {
 
 	// Detect search type and get appropriate templates
 	searchType := detectSearchType(cfg)
-	instructions, subagent, _, subagentMarker := getTemplates(searchType)
+	instructions, subagent, _, subagentMarker, skillTemplate := getTemplates(searchType)
 
 	agentFiles := []string{
 		".cursorrules",
@@ -455,6 +627,11 @@ func runAgentSetup(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Create Claude Code skill file (always)
+	if err := createSkill(cwd, skillTemplate); err != nil {
+		fmt.Printf("Warning: could not create skill: %v\n", err)
+	}
+
 	return nil
 }
 
@@ -482,5 +659,32 @@ func createSubagent(cwd string, subagent, _ string) error {
 	}
 
 	fmt.Printf("Created subagent: %s\n", subagentPath)
+	return nil
+}
+
+func createSkill(cwd string, skillTemplate string) error {
+	// Define paths
+	skillsDir := filepath.Join(cwd, ".claude", "skills", "agentdx")
+	skillPath := filepath.Join(skillsDir, "SKILL.md")
+
+	// Check if skill already exists and contains marker
+	if content, err := os.ReadFile(skillPath); err == nil {
+		if strings.Contains(string(content), skillMarker) {
+			fmt.Printf("Skill already exists: %s\n", skillPath)
+			return nil
+		}
+	}
+
+	// Create .claude/skills/agentdx/ directory if it doesn't exist
+	if err := os.MkdirAll(skillsDir, 0755); err != nil {
+		return fmt.Errorf("failed to create skills directory: %w", err)
+	}
+
+	// Write the skill file
+	if err := os.WriteFile(skillPath, []byte(skillTemplate), 0600); err != nil {
+		return fmt.Errorf("failed to write skill file: %w", err)
+	}
+
+	fmt.Printf("Created skill: %s\n", skillPath)
 	return nil
 }

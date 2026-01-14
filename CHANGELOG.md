@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 FEATURE: Dynamic agent-setup based on search type (postgres vs embeddings)
 FEATURE: Add full-text search template for PostgreSQL provider (parallel keyword searches)
 FEATURE: Add config discovery in parent directories for agent-setup command
+FEATURE: Add Claude Code skill generation to agent-setup (.claude/skills/agentdx/SKILL.md)
+FEATURE: Dynamic skill content based on search type (semantic vs full-text)
 
 ## 2026-01-13
 

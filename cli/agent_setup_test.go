@@ -156,8 +156,8 @@ func TestCreateSubagentFullTextTemplate(t *testing.T) {
 	}
 
 	// Verify full-text specific content
-	if !strings.Contains(contentStr, "PostgreSQL full-text search") {
-		t.Error("missing PostgreSQL full-text search description")
+	if !strings.Contains(contentStr, "full-text search") {
+		t.Error("missing full-text search description")
 	}
 	if !strings.Contains(contentStr, "parallel keyword searches") {
 		t.Error("missing parallel keyword search instruction")
@@ -262,7 +262,7 @@ func TestDetectSearchType_UnknownProvider(t *testing.T) {
 // Tests for getTemplates function
 
 func TestGetTemplates_Semantic(t *testing.T) {
-	instructions, subagent, marker, subagentMarker := getTemplates(searchTypeSemantic)
+	instructions, subagent, marker, subagentMarker, skillTemplate := getTemplates(searchTypeSemantic)
 
 	if !strings.Contains(instructions, "Semantic Code Search") {
 		t.Error("semantic instructions should contain 'Semantic Code Search'")
@@ -276,13 +276,19 @@ func TestGetTemplates_Semantic(t *testing.T) {
 	if subagent == "" {
 		t.Error("subagent template should not be empty")
 	}
+	if skillTemplate == "" {
+		t.Error("skill template should not be empty")
+	}
+	if !strings.Contains(skillTemplate, skillMarker) {
+		t.Error("skill template should contain skill marker")
+	}
 }
 
 func TestGetTemplates_FullText(t *testing.T) {
-	instructions, subagent, marker, subagentMarker := getTemplates(searchTypeFullText)
+	instructions, subagent, marker, subagentMarker, skillTemplate := getTemplates(searchTypeFullText)
 
-	if !strings.Contains(instructions, "PostgreSQL Full-Text Search") {
-		t.Error("full-text instructions should contain 'PostgreSQL Full-Text Search'")
+	if !strings.Contains(instructions, "Full-Text Search") {
+		t.Error("full-text instructions should contain 'Full-Text Search'")
 	}
 	if marker != fullTextMarker {
 		t.Errorf("marker = %q, want %q", marker, fullTextMarker)
@@ -292,6 +298,12 @@ func TestGetTemplates_FullText(t *testing.T) {
 	}
 	if subagent == "" {
 		t.Error("subagent template should not be empty")
+	}
+	if skillTemplate == "" {
+		t.Error("skill template should not be empty")
+	}
+	if !strings.Contains(skillTemplate, skillMarker) {
+		t.Error("skill template should contain skill marker")
 	}
 }
 
