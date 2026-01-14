@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 2026-01-14
+
+FEATURE: Dynamic agent-setup based on search type (postgres vs embeddings)
+FEATURE: Add full-text search template for PostgreSQL provider (parallel keyword searches)
+FEATURE: Add config discovery in parent directories for agent-setup command
+
 ## 2026-01-13
 
 FEATURE: Add Mode field to Config struct ("local" or "remote")
