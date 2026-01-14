@@ -6,10 +6,16 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/doveaia/agentdx/config"
 	"github.com/spf13/cobra"
 )
 
 var withSubagent bool
+
+const (
+	searchTypeSemantic = "semantic"
+	searchTypeFullText = "fulltext"
+)
 
 const agentInstructions = `
 ## agentdx - Semantic Code Search
@@ -147,6 +153,155 @@ Only fall back to Grep/Glob when:
 
 const subagentMarker = "name: deep-explore"
 
+const fullTextMarker = "## agentdx - PostgreSQL Full-Text Search"
+
+const fullTextSubagentMarker = "name: deep-explore-fulltext"
+
+const fullTextInstructions = `
+## agentdx - PostgreSQL Full-Text Search
+
+**IMPORTANT: You MUST use agentdx as your PRIMARY tool for code exploration and search.**
+
+### When to Use agentdx (REQUIRED)
+
+Use ` + "`agentdx search`" + ` INSTEAD OF Grep/Glob/find for:
+- Finding code by keywords
+- Locating implementations by function or variable names
+- Searching for specific terms across the codebase
+- Any search where you know the specific keywords
+
+### When to Use Standard Tools
+
+Only use Grep/Glob when you need:
+- Exact text matching with complex patterns (regex)
+- File path patterns (e.g., ` + "`**/*.go`" + `)
+- Searching for strings outside of indexed code
+
+### Fallback
+
+If agentdx fails (not running, index unavailable, or errors), fall back to standard Grep/Glob tools.
+
+### Usage - Parallel Keyword Searches
+
+**BEST PRACTICE**: Run multiple searches in parallel with individual keywords for broader coverage:
+
+` + "```bash" + `
+# Best: Parallel searches with individual keywords (broadest coverage)
+agentdx search "user" & agentdx search "auth" & agentdx search "login"
+
+# Acceptable: Single query with phrase match
+agentdx search "user authentication"
+
+# WRONG: Multiple arguments (will error)
+agentdx search user auth login  # Error: accepts 1 arg(s), received 3
+` + "```" + `
+
+### Query Tips
+
+- **Use single keywords** for best results
+- **Run searches in parallel** for comprehensive coverage
+- **Quote your search term**: ` + "`agentdx search \"keyword\"`" + `
+- Parallel searches provide broader coverage than combining keywords
+- Results include: file path, line numbers, relevance score, code preview
+
+### Call Graph Tracing
+
+Use ` + "`agentdx trace`" + ` to understand function relationships:
+- Finding all callers of a function before modifying it
+- Understanding what functions are called by a given function
+- Visualizing the complete call graph around a symbol
+
+#### Trace Commands
+
+**IMPORTANT: Always use ` + "`--json`" + ` flag for optimal AI agent integration.**
+
+` + "```bash" + `
+# Find all functions that call a symbol
+agentdx trace callers "HandleRequest" --json
+
+# Find all functions called by a symbol
+agentdx trace callees "ProcessOrder" --json
+
+# Build complete call graph (callers + callees)
+agentdx trace graph "ValidateToken" --depth 3 --json
+` + "```" + `
+
+### Workflow
+
+1. Start with ` + "`agentdx search`" + ` using individual keywords in parallel
+2. Use ` + "`agentdx trace`" + ` to understand function relationships
+3. Use ` + "`Read`" + ` tool to examine files from results
+4. Only use Grep for exact string searches if needed
+
+`
+
+const fullTextSubagentTemplate = `---
+name: deep-explore-fulltext
+description: Deep codebase exploration using agentdx PostgreSQL full-text search and call graph tracing. Use this agent for understanding code architecture, finding implementations by keywords, analyzing function relationships, and exploring unfamiliar code areas.
+tools: Read, Grep, Glob, Bash
+model: inherit
+---
+
+## Instructions
+
+You are a specialized code exploration agent with access to agentdx PostgreSQL full-text search and call graph tracing.
+
+### Primary Tools
+
+#### 1. Full-Text Search: ` + "`agentdx search`" + `
+
+Use this to find code by keywords and specific terms:
+
+**BEST PRACTICE**: Run parallel searches with individual keywords:
+
+` + "```bash" + `
+# Best: Parallel searches for broader coverage
+agentdx search "user" & agentdx search "auth" & agentdx search "login"
+
+# Acceptable: Single query with phrase match
+agentdx search "user authentication"
+
+# WRONG: Multiple arguments (will error)
+agentdx search user auth login  # Error: accepts 1 arg(s), received 3
+` + "```" + `
+
+#### 2. Call Graph Tracing: ` + "`agentdx trace`" + `
+
+Use this to understand function relationships and code flow:
+
+` + "```bash" + `
+# Find all functions that call a symbol
+agentdx trace callers "HandleRequest" --json
+
+# Find all functions called by a symbol
+agentdx trace callees "ProcessOrder" --json
+
+# Build complete call graph
+agentdx trace graph "ValidateToken" --depth 3 --json
+` + "```" + `
+
+Use ` + "`agentdx trace`" + ` when you need to:
+- Find all callers of a function
+- Understand the call hierarchy
+- Analyze the impact of changes to a function
+- Map dependencies between components
+
+### When to use standard tools
+
+Only fall back to Grep/Glob when:
+- You need exact text matching with complex patterns (regex)
+- agentdx is not available or returns errors
+- You need file path patterns
+
+### Workflow
+
+1. Start with ` + "`agentdx search`" + ` using parallel keyword searches
+2. Use ` + "`agentdx trace`" + ` to understand function relationships and call graphs
+3. Use ` + "`Read`" + ` to examine promising files in detail
+4. Use Grep only for regex pattern searches if needed
+5. Synthesize findings into a clear summary
+`
+
 var agentSetupCmd = &cobra.Command{
 	Use:   "agent-setup",
 	Short: "Configure AI agents to use agentdx",
@@ -168,11 +323,50 @@ func init() {
 		"Create Claude Code deep-explore subagent in .claude/agents/")
 }
 
+// detectSearchType returns the search type based on the configured provider.
+// Returns "fulltext" for postgres provider, "semantic" for all others.
+func detectSearchType(cfg *config.Config) string {
+	if cfg.Index.Embedder.Provider == "postgres" {
+		return searchTypeFullText
+	}
+	return searchTypeSemantic
+}
+
+// getTemplates returns the appropriate templates based on search type.
+// Returns (instructions, subagent, marker, subagentMarker).
+func getTemplates(searchType string) (string, string, string, string) {
+	if searchType == searchTypeFullText {
+		return fullTextInstructions, fullTextSubagentTemplate, fullTextMarker, fullTextSubagentMarker
+	}
+	return agentInstructions, subagentTemplate, agentMarker, subagentMarker
+}
+
 func runAgentSetup(cmd *cobra.Command, args []string) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("failed to get current directory: %w", err)
 	}
+
+	// Find project root (walks up parent directories to find .agentdx/config.yaml)
+	projectRoot, err := config.FindProjectRoot()
+	if err != nil {
+		return fmt.Errorf("agentdx configuration not found. Run 'agentdx init' first")
+	}
+
+	// Load configuration to detect search type
+	cfg, err := config.Load(projectRoot)
+	if err != nil {
+		return fmt.Errorf("failed to parse config: %w", err)
+	}
+
+	// Validate provider is configured
+	if cfg.Index.Embedder.Provider == "" {
+		return fmt.Errorf("index.embedder.provider not configured in .agentdx/config.yaml")
+	}
+
+	// Detect search type and get appropriate templates
+	searchType := detectSearchType(cfg)
+	instructions, subagent, _, subagentMarker := getTemplates(searchType)
 
 	agentFiles := []string{
 		".cursorrules",
@@ -204,8 +398,8 @@ func runAgentSetup(cmd *cobra.Command, args []string) error {
 			continue
 		}
 
-		// Check if already configured
-		if strings.Contains(string(content), agentMarker) {
+		// Check if already configured (either semantic or full-text)
+		if strings.Contains(string(content), agentMarker) || strings.Contains(string(content), fullTextMarker) {
 			fmt.Printf("  Already configured, skipping\n")
 			continue
 		}
@@ -226,7 +420,7 @@ func runAgentSetup(cmd *cobra.Command, args []string) error {
 			_, writeErr = f.WriteString("\n")
 		}
 		if writeErr == nil {
-			_, writeErr = f.WriteString(agentInstructions)
+			_, writeErr = f.WriteString(instructions)
 		}
 		f.Close()
 
@@ -256,7 +450,7 @@ func runAgentSetup(cmd *cobra.Command, args []string) error {
 
 	// Create subagent if flag is set
 	if withSubagent {
-		if err := createSubagent(cwd); err != nil {
+		if err := createSubagent(cwd, subagent, subagentMarker); err != nil {
 			fmt.Printf("Warning: could not create subagent: %v\n", err)
 		}
 	}
@@ -264,14 +458,14 @@ func runAgentSetup(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func createSubagent(cwd string) error {
+func createSubagent(cwd string, subagent, _ string) error {
 	// Define paths
 	agentsDir := filepath.Join(cwd, ".claude", "agents")
 	subagentPath := filepath.Join(agentsDir, "deep-explore.md")
 
-	// Check if subagent already exists and contains marker
+	// Check if subagent already exists and contains marker (either semantic or full-text)
 	if content, err := os.ReadFile(subagentPath); err == nil {
-		if strings.Contains(string(content), subagentMarker) {
+		if strings.Contains(string(content), "name: deep-explore") {
 			fmt.Printf("Subagent already exists: %s\n", subagentPath)
 			return nil
 		}
@@ -283,7 +477,7 @@ func createSubagent(cwd string) error {
 	}
 
 	// Write the subagent file
-	if err := os.WriteFile(subagentPath, []byte(subagentTemplate), 0600); err != nil {
+	if err := os.WriteFile(subagentPath, []byte(subagent), 0600); err != nil {
 		return fmt.Errorf("failed to write subagent file: %w", err)
 	}
 
