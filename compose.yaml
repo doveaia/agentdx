@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: agentdx-postgres
+    environment:
+      POSTGRES_USER: agentdx
+      POSTGRES_PASSWORD: agentdx
+      POSTGRES_DB: agentdx
+    ports:
+      - "5432:5432"
+    volumes:
+      - agentdx-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agentdx"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Optional: Ollama for local embeddings (Linux only)
+  # Uncomment the following to run Ollama in Docker
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: agentdx-ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - agentdx-ollama:/root/.ollama
+  #   # For GPU support (NVIDIA), add:
+  #   # deploy:
+  #   #   resources:
+  #   #     reservations:
+  #   #       devices:
+  #   #         - driver: nvidia
+  #   #           count: all
+  #   #           capabilities: [gpu]
+
+volumes:
+  agentdx-pgdata:
+  # agentdx-ollama:

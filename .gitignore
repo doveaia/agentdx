@@ -1,0 +1,64 @@
+# Binaries
+/agentdx
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace file
+go.work
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+.agentdx/
+
+# Build
+bin/
+dist/
+
+# Documentation (auto-generated)
+docs/src/content/docs/commands/*.md
+docs/dist/
+docs/node_modules/
+docs/.astro/
+__debug*
+.agentdx/
+
+# Added by Spec Kitty CLI (auto-managed)
+.doveaia
+.worktrees/
+.claude/
+.codex/
+.opencode/
+.windsurf/
+.gemini/
+.cursor/
+.qwen/
+.kilocode/
+.augment/
+.roo/
+.amazonq/
+.github/copilot/
+.doveaiago.work
+go.work
+.kittify/.dashboard
+go.work
+TRASH*
+go.work

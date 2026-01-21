@@ -1,0 +1,1 @@
+../../../.kittify/AGENTS.md

@@ -1,0 +1,55 @@
+{
+  "enabledPlugins": {
+    "aichat@cctools-plugins": true,
+    "context7@claude-plugins-official": true,
+    "gopls-lsp@claude-plugins-official": true,
+    "ralph-loop@claude-plugins-official": true,
+    "safety-hooks@cctools-plugins": true,
+    "tmux-cli@cctools-plugins": true,
+    "workflow@cctools-plugins": true
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/agentdx/agentdx-session-start.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '⚠️ AGENTDX FALLBACK: Grep tool requested. Use agentdx search instead unless agentdx failed.'"
+          }
+        ]
+      },
+      {
+        "matcher": "Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '⚠️ AGENTDX FALLBACK: Glob tool requested. Use agentdx files instead unless agentdx failed.'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/agentdx/agentdx-fallback.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

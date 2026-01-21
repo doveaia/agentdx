@@ -1,0 +1,35 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '⚠️ AGENTDX FALLBACK: Grep tool requested. Use agentdx search instead unless agentdx failed.'"
+          }
+        ]
+      },
+      {
+        "matcher": "Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '⚠️ AGENTDX FALLBACK: Glob tool requested. Use agentdx files instead unless agentdx failed.'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/agentdx-fallback.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
