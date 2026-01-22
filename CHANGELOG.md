@@ -14,6 +14,7 @@ FEATURE: Add `--pg-name` and `--pg-port` flags to `watch` and `session start` co
 FEATURE: Add config file support for `container_name` and `port` under `index.store.postgres`
 FEATURE: Add Docker volume support for persistent data across container restarts
 FEATURE: Add TestContainer helper for parallel test execution with random containers
+FIX: Sanitize database names in TestTestContainerCreateDatabase to replace hyphens with underscores for PostgreSQL compatibility
 
 ## 2026-01-21
 FEATURE: Initial refactor  grepai from semantic to full text search

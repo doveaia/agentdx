@@ -60,7 +60,8 @@ func TestTestContainerCreateDatabase(t *testing.T) {
 
 	tc := NewTestContainer(t)
 
-	dbName := "test_db_" + tc.Name // Use unique name
+	// Sanitize container name for use as database name (replace hyphens with underscores)
+	dbName := "test_db_" + sanitizeDbName(tc.Name)
 	dsn := tc.CreateDatabase(dbName)
 
 	if dsn == "" {
@@ -72,6 +73,21 @@ func TestTestContainerCreateDatabase(t *testing.T) {
 	if !contains(dsn, expected) {
 		t.Errorf("DSN should contain database name %s: %s", dbName, dsn)
 	}
+}
+
+// sanitizeDbName replaces characters invalid for PostgreSQL database names with underscores.
+// PostgreSQL identifiers can only contain letters, digits, and underscores.
+func sanitizeDbName(name string) string {
+	result := make([]byte, 0, len(name))
+	for i := 0; i < len(name); i++ {
+		c := name[i]
+		if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' {
+			result = append(result, c)
+		} else {
+			result = append(result, '_')
+		}
+	}
+	return string(result)
 }
 
 // Helper function to check if a string contains a substring
