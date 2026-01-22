@@ -145,7 +145,7 @@ func (s *Server) handleSSEStatus(w http.ResponseWriter, r *http.Request) {
 		case <-client.Done:
 			return
 		case msg := <-client.Messages:
-			w.Write(msg)
+			_, _ = w.Write(msg)
 			flusher.Flush()
 		}
 	}

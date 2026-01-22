@@ -182,10 +182,10 @@ func (s *Server) handleStatic(w http.ResponseWriter, r *http.Request) {
 	switch path {
 	case "htmx.min.js":
 		w.Header().Set("Content-Type", "application/javascript")
-		w.Write([]byte(htmxMinJS))
+		_, _ = w.Write([]byte(htmxMinJS))
 	case "style.css":
 		w.Header().Set("Content-Type", "text/css")
-		w.Write([]byte(dashboardCSS))
+		_, _ = w.Write([]byte(dashboardCSS))
 	default:
 		http.NotFound(w, r)
 	}

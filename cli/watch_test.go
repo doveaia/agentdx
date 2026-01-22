@@ -8,13 +8,13 @@ import (
 
 func TestBuildContainerOptions(t *testing.T) {
 	tests := []struct {
-		name      string
-		cfgName   string
-		cfgPort   int
-		flagName  string
-		flagPort  int
-		wantName  string
-		wantPort  int
+		name     string
+		cfgName  string
+		cfgPort  int
+		flagName string
+		flagPort int
+		wantName string
+		wantPort int
 	}{
 		{
 			name:     "all defaults",
@@ -103,13 +103,13 @@ func TestBuildContainerOptions(t *testing.T) {
 
 func TestBuildSessionContainerOptions(t *testing.T) {
 	tests := []struct {
-		name      string
-		cfgName   string
-		cfgPort   int
-		flagName  string
-		flagPort  int
-		wantName  string
-		wantPort  int
+		name     string
+		cfgName  string
+		cfgPort  int
+		flagName string
+		flagPort int
+		wantName string
+		wantPort int
 	}{
 		{
 			name:     "all defaults",

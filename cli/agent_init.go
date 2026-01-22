@@ -13,10 +13,10 @@ var agentTemplates embed.FS
 
 // AgentConfig represents a coding agent configuration
 type AgentConfig struct {
-	Name         string
-	Description  string
-	Files        []AgentFile
-	Directories  []string
+	Name        string
+	Description string
+	Files       []AgentFile
+	Directories []string
 }
 
 // AgentFile represents a file to be generated for an agent

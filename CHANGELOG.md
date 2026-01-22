@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## 2026-01-22
+FIX: Add missing chi router dependency to go.mod for dashboard package
+FIX: Handle unchecked error returns in dashboard JSON and write operations
+FIX: Bind port finder to localhost only (gosec G102) and handle type assertions properly
+FIX: Add go mod download step to CI lint job to ensure dependencies are available
 FEATURE: Auto-generate all coding agent configurations on `agentdx init` (Claude Code, Cursor, Windsurf, Codex CLI, GitHub Copilot, Gemini)
 FEATURE: Add "Inspiration" section to README crediting grepai as foundation
 FEATURE: Auto-start PostgreSQL container on `agentdx watch` and `agentdx session start`

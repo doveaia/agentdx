@@ -106,11 +106,17 @@ func generateRandomName() string {
 
 // findAvailablePort finds an available TCP port.
 func findAvailablePort() int {
-	listener, err := net.Listen("tcp", ":0")
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		// Fallback to a random port in a high range
 		return 50000 + int(time.Now().UnixNano()%10000)
 	}
-	defer listener.Close()
-	return listener.Addr().(*net.TCPAddr).Port
+	addr, ok := listener.Addr().(*net.TCPAddr)
+	if !ok {
+		_ = listener.Close()
+		return 50000 + int(time.Now().UnixNano()%10000)
+	}
+	port := addr.Port
+	_ = listener.Close()
+	return port
 }
