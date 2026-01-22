@@ -92,3 +92,19 @@ func ProjectDSN(dbName string) string {
 		defaultPostgresHost, defaultPostgresPort,
 		dbName)
 }
+
+// PostgresDSNWithPort returns a DSN for connecting to postgres with a custom port.
+func PostgresDSNWithPort(port int) string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
+		defaultPostgresUser, defaultPostgresPassword,
+		defaultPostgresHost, port,
+		defaultPostgresDB)
+}
+
+// ProjectDSNWithPort returns a DSN for the project database with a custom port.
+func ProjectDSNWithPort(dbName string, port int) string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
+		defaultPostgresUser, defaultPostgresPassword,
+		defaultPostgresHost, port,
+		dbName)
+}

@@ -19,6 +19,12 @@ const (
 	GracefulShutdownTimeout = 5 * time.Second
 )
 
+// DaemonOptions holds optional configuration for the daemon manager
+type DaemonOptions struct {
+	PgName string // PostgreSQL container name
+	PgPort int    // PostgreSQL host port
+}
+
 // DaemonStatus represents the current state of the session daemon
 type DaemonStatus struct {
 	Running   bool      `json:"running"`
@@ -32,6 +38,7 @@ type DaemonManager struct {
 	ProjectRoot string
 	PIDFile     *PIDFile
 	logFile     string
+	opts        DaemonOptions
 	mu          sync.Mutex
 }
 
@@ -41,6 +48,17 @@ func NewDaemonManager(projectRoot string) *DaemonManager {
 		ProjectRoot: projectRoot,
 		PIDFile:     NewPIDFile(projectRoot),
 		logFile:     filepath.Join(projectRoot, ".agentdx", SessionLogFileName),
+		opts:        DaemonOptions{}, // Default options
+	}
+}
+
+// NewDaemonManagerWithOptions creates a daemon manager with custom options
+func NewDaemonManagerWithOptions(projectRoot string, opts DaemonOptions) *DaemonManager {
+	return &DaemonManager{
+		ProjectRoot: projectRoot,
+		PIDFile:     NewPIDFile(projectRoot),
+		logFile:     filepath.Join(projectRoot, ".agentdx", SessionLogFileName),
+		opts:        opts,
 	}
 }
 
@@ -86,8 +104,16 @@ func (d *DaemonManager) Start(ctx context.Context) error {
 	}
 	defer logF.Close()
 
-	// Create the command
-	cmd := exec.CommandContext(ctx, execPath, "watch", "--daemon")
+	// Create the command with optional flags
+	args := []string{"watch", "--daemon"}
+	if d.opts.PgName != "" {
+		args = append(args, "--pg-name", d.opts.PgName)
+	}
+	if d.opts.PgPort != 0 {
+		args = append(args, "--pg-port", strconv.Itoa(d.opts.PgPort))
+	}
+
+	cmd := exec.CommandContext(ctx, execPath, args...)
 	cmd.Dir = d.ProjectRoot
 
 	// Redirect stdout and stderr to log file

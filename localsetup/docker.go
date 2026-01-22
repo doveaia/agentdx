@@ -63,6 +63,11 @@ func CreateContainer(cfg ContainerConfig) error {
 		"-p", fmt.Sprintf("%s:%s", cfg.HostPort, cfg.ContainerPort),
 	}
 
+	// Add volume if specified
+	if cfg.VolumeName != "" {
+		args = append(args, "-v", fmt.Sprintf("%s:/var/lib/postgresql/data", cfg.VolumeName))
+	}
+
 	for key, value := range cfg.EnvVars {
 		args = append(args, "-e", fmt.Sprintf("%s=%s", key, value))
 	}
