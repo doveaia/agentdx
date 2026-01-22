@@ -1,0 +1,36 @@
+# Windsurf Rules
+
+## Code Search: Use agentdx
+
+This project uses agentdx for fast, indexed code search.
+
+### Commands
+
+```bash
+# Start session
+agentdx session start
+
+# Text search (replaces grep)
+agentdx search "pattern" --json --compact
+
+# File patterns (replaces find)
+agentdx files "*.go" --json --compact
+
+# Call graph tracing
+agentdx trace callers "FunctionName" --json
+agentdx trace callees "FunctionName" --json
+```
+
+### Rules
+
+- Always use agentdx instead of grep/find/ripgrep
+- Add --json --compact for AI-friendly output
+- Use parallel searches for multiple terms
+- Run agentdx session start before searching
+
+### Benefits
+
+- Faster: Pre-indexed PostgreSQL full-text search
+- Smarter: Structural boosting for code
+- Context-aware: Call graph tracing
+- Token-efficient: Compact JSON output

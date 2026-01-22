@@ -113,13 +113,18 @@ Options:
 		}
 	}
 
+	// Generate coding agent configurations
+	if err := GenerateAgentConfigs(cwd); err != nil {
+		fmt.Printf("Warning: could not generate agent configs: %v\n", err)
+	}
+
 	fmt.Println("\nagentdx initialized successfully!")
 	fmt.Println("\nNext steps:")
 	fmt.Println("  1. Start the indexing daemon: agentdx watch")
 	fmt.Println("  2. Search your code: agentdx search \"your query\"")
-	fmt.Println("  3. Configure your AI agent: agentdx setup")
 
 	fmt.Println("\nUsing PostgreSQL Full Text Search (no external embedding service needed).")
+	fmt.Println("Coding agent configurations generated for: Claude Code, Cursor, Windsurf, Codex CLI, GitHub Copilot, Gemini")
 
 	return nil
 }
@@ -203,10 +208,16 @@ func runLocalInit(cwd string) error {
 		fmt.Printf("\nDocker Compose file: %s\n", result.ComposeFilePath)
 	}
 
+	// Generate coding agent configurations
+	if err := GenerateAgentConfigs(cwd); err != nil {
+		fmt.Printf("Warning: could not generate agent configs: %v\n", err)
+	}
+
 	fmt.Println("\nNext steps:")
 	fmt.Println("  1. Start the indexing daemon: agentdx watch")
 	fmt.Println("  2. Search your code: agentdx search \"your query\"")
-	fmt.Println("  3. Configure your AI agent: agentdx setup --with-subagent")
+
+	fmt.Println("\nCoding agent configurations generated for: Claude Code, Cursor, Windsurf, Codex CLI, GitHub Copilot, Gemini")
 
 	return nil
 }

@@ -1,0 +1,37 @@
+# Cursor Rules
+
+## Code Search: Use agentdx
+
+This project uses agentdx for fast, indexed code search. Always use agentdx commands instead of grep or find.
+
+### Essential Commands
+
+```bash
+# Start session (run once)
+agentdx session start
+
+# Text search
+agentdx search "pattern" --json --compact
+
+# File patterns
+agentdx files "*.go" --json --compact
+
+# Call graph
+agentdx trace callers "FunctionName" --json
+agentdx trace callees "FunctionName" --json
+```
+
+### Rules
+
+1. Use `agentdx search` instead of grep/ripgrep
+2. Use `agentdx files` instead of find/glob
+3. Always add `--json --compact` for clean output
+4. Run `agentdx session start` before first search
+5. For multiple terms, use parallel searches (no regex OR)
+
+### Why agentdx?
+
+- Pre-indexed PostgreSQL full-text search
+- Structural boosting for relevant results
+- Call graph tracing for code relationships
+- AI-optimized compact JSON output

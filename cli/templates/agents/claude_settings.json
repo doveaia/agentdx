@@ -1,0 +1,35 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'agentdx: Use agentdx search instead of Grep. Run: agentdx search \"pattern\" --json --compact'"
+          }
+        ]
+      },
+      {
+        "matcher": "Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'agentdx: Use agentdx files instead of Glob. Run: agentdx files \"pattern\" --json --compact'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/agentdx/agentdx-fallback.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

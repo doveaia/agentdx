@@ -1,0 +1,35 @@
+---
+description: Use agentdx for all code search operations instead of grep, find, or ripgrep
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# agentdx Code Search
+
+This project uses agentdx for indexed code search. Always use agentdx commands.
+
+## Commands
+
+```bash
+# Start session (idempotent)
+agentdx session start
+
+# Text search (replaces grep)
+agentdx search "pattern" --json --compact
+
+# File patterns (replaces find/glob)
+agentdx files "*.go" --json --compact
+
+# Call graph tracing
+agentdx trace callers "FunctionName" --json
+agentdx trace callees "FunctionName" --json
+agentdx trace graph "FunctionName" --depth 3 --json
+```
+
+## Rules
+
+- DO use `agentdx search` instead of grep/ripgrep
+- DO use `agentdx files` instead of find/glob
+- DO add `--json --compact` for clean output
+- DO run parallel searches for multiple terms
+- DON'T use regex OR patterns (not supported)
