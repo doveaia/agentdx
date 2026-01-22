@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 2026-01-22
+FEATURE: Add "Inspiration" section to README crediting grepai as foundation
+
 ## 2026-01-21
 FEATURE: Initial refactor  grepai from semantic to full text search
 FIX: Ensure compose.yaml is generated even when Docker is unavailable (TestSetupPostgresBackend_NoDocker)

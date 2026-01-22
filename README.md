@@ -8,6 +8,12 @@
 
 `agentdx` uses PostgreSQL full-text search optimized for code patterns. Not semantic search, not vector embeddings — just precise, token-efficient full-text search that matches how AI coding assistants actually explore codebases.
 
+## Inspiration
+
+`agentdx` is inspired by and built on the foundation of [grepai](https://github.com/yoanbernabeu/grepai), a semantic code search tool that uses vector embeddings to find code by meaning.
+
+While **grepai** takes a semantic search approach (finding code by *what it does* using embeddings), **agentdx** takes a different path: full-text search optimized for how AI agents actually work. We observed that AI coding assistants search by exact patterns — function names, class names, identifiers — not by semantic similarity. This insight led us to fork the architecture and replace vector search with PostgreSQL full-text search, achieving 73% token reduction while maintaining precise results.
+
 ## Token Efficiency: 73% Reduction
 
 AI agents search code by matching text patterns, not by semantic similarity. Full-text search aligns with this workflow and dramatically reduces token consumption.
