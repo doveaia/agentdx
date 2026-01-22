@@ -120,6 +120,57 @@ All hooks are project-scoped (installed in your project directory, not globally)
 
 ### Troubleshooting
 
+**Docker Not Running:**
+```
+Error: Docker is not running. Please start Docker and try again.
+```
+**Solution**: Start Docker Desktop or the Docker daemon.
+
+**Port Already in Use:**
+```
+Error: Port 55432 is already in use. Try a different port with --pg-port.
+```
+**Solution**:
+```bash
+# Use a different port
+agentdx watch --pg-port 55433
+
+# Or find what's using the port
+lsof -i :55432
+```
+
+**Container Won't Start:**
+```
+Error: failed to create container: ...
+```
+**Solutions**:
+```bash
+# Check container logs
+docker logs agentdx-postgres
+
+# Remove stale container
+docker rm agentdx-postgres
+
+# Try again
+agentdx watch
+```
+
+**PostgreSQL Not Ready:**
+```
+Error: PostgreSQL not ready after 30s. Check container logs: docker logs agentdx-postgres
+```
+**Solution**: Check container logs for startup errors.
+
+**Test Failures with Container Conflicts:**
+If tests fail with container name conflicts:
+```bash
+# Check for orphaned test containers
+docker ps -a | grep agentdx-test
+
+# Clean up orphaned containers
+docker rm $(docker ps -aq -f name=agentdx-test-)
+```
+
 **Daemon won't start:**
 - Check if agentdx is initialized: `ls .agentdx/config.yaml`
 - Check logs: `cat .agentdx/session.log`
@@ -219,18 +270,57 @@ Claude Code automatically uses this agent for deep codebase exploration tasks.
 Stored in `.agentdx/config.yaml`:
 
 ```yaml
-store:
-  postgres:
-    dsn: "postgres://localhost/agentdx?sslmode=disable"
-chunking:
-  size: 512
-  overlap: 50
-search:
-  boost:
-    enabled: true           # Structural boosting for better relevance
-trace:
-  mode: fast                # fast (regex) | precise (tree-sitter)
+version: 1
+mode: local
+index:
+  store:
+    postgres:
+      dsn: "postgres://agentdx:agentdx@localhost:55432/agentdx_project?sslmode=disable"
+      container_name: "agentdx-postgres"  # Optional: custom container name
+      port: 55432  # Optional: custom host port
+  chunking:
+    size: 512
+    overlap: 50
+  search:
+    boost:
+      enabled: true           # Structural boosting for better relevance
+  trace:
+    mode: fast                # fast (regex) | precise (tree-sitter)
 ```
+
+### Custom Container Settings
+
+You can customize the PostgreSQL container name and port via CLI flags or config file:
+
+```bash
+# Use a custom container name
+agentdx watch --pg-name my-project-db
+
+# Use a custom port
+agentdx watch --pg-port 5433
+
+# Or both (short flags)
+agentdx watch -n my-db -p 5433
+
+# Session daemon with custom settings
+agentdx session start --pg-name my-project-pg --pg-port 5433
+```
+
+Or set defaults in `.agentdx/config.yaml`:
+
+```yaml
+index:
+  store:
+    postgres:
+      container_name: "my-project-postgres"
+      port: 55433
+```
+
+CLI flags always take precedence over config file settings.
+
+### Data Persistence
+
+PostgreSQL data is stored in a Docker volume named `{container_name}-data`, so your index survives container restarts and system reboots. The container persists after `agentdx watch` exits to preserve your index.
 
 ### Search Boost (enabled by default)
 

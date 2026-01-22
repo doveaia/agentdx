@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+FEATURE: Auto-start PostgreSQL container on `agentdx watch` and `agentdx session start`
+FEATURE: Add `--pg-name` and `--pg-port` flags to `watch` and `session start` commands
+FEATURE: Add config file support for `container_name` and `port` under `index.store.postgres`
+FEATURE: Add Docker volume support for persistent data across container restarts
+FEATURE: Add TestContainer helper for parallel test execution with random containers
+
 ## 2026-01-21
 FEATURE: Initial refactor  grepai from semantic to full text search
 FIX: Ensure compose.yaml is generated even when Docker is unavailable (TestSetupPostgresBackend_NoDocker)

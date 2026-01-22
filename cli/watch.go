@@ -13,6 +13,7 @@ import (
 
 	"github.com/doveaia/agentdx/config"
 	"github.com/doveaia/agentdx/indexer"
+	"github.com/doveaia/agentdx/localsetup"
 	"github.com/doveaia/agentdx/store"
 	"github.com/doveaia/agentdx/trace"
 	"github.com/doveaia/agentdx/watcher"
@@ -25,18 +26,56 @@ var watchCmd = &cobra.Command{
 	Long: `Start a background process that monitors file changes and maintains the index.
 
 The watcher will:
+- Start a PostgreSQL container if not already running (requires Docker)
 - Perform an initial scan comparing disk state with existing index
 - Remove obsolete entries and index new files
 - Monitor filesystem events (create, modify, delete, rename)
 - Apply debouncing (500ms) to batch rapid changes
-- Handle atomic updates to avoid duplicate vectors`,
+- Handle atomic updates to avoid duplicate vectors
+
+Container Options:
+  --pg-name, -n    Custom container name (default: agentdx-postgres)
+  --pg-port, -p    Custom host port (default: 55432)
+
+The PostgreSQL container persists after agentdx exits to preserve your index.`,
 	RunE: runWatch,
 }
 
-var daemonMode bool
+var (
+	daemonMode bool
+	pgName     string
+	pgPort     int
+)
 
 func init() {
 	watchCmd.Flags().BoolVar(&daemonMode, "daemon", false, "Run in daemon mode (for session management)")
+	watchCmd.Flags().StringVarP(&pgName, "pg-name", "n", "", "PostgreSQL container name (default: agentdx-postgres)")
+	watchCmd.Flags().IntVarP(&pgPort, "pg-port", "p", 0, "PostgreSQL host port (default: 55432)")
+}
+
+// buildContainerOptions builds container options from flags and config.
+// Priority: flags > config > defaults
+func buildContainerOptions(cfg *config.Config, flagName string, flagPort int) localsetup.ContainerOptions {
+	// Start with defaults
+	opts := localsetup.DefaultContainerOptions()
+
+	// Apply config values (if set)
+	if cfg.Index.Store.Postgres.ContainerName != "" {
+		opts.Name = cfg.Index.Store.Postgres.ContainerName
+	}
+	if cfg.Index.Store.Postgres.Port != 0 {
+		opts.Port = cfg.Index.Store.Postgres.Port
+	}
+
+	// Apply flag values (highest priority)
+	if flagName != "" {
+		opts.Name = flagName
+	}
+	if flagPort != 0 {
+		opts.Port = flagPort
+	}
+
+	return opts
 }
 
 func runWatch(cmd *cobra.Command, args []string) error {
@@ -59,13 +98,22 @@ func runWatch(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to load configuration: %w", err)
 	}
 
+	// Build container options: flags > config > defaults
+	opts := buildContainerOptions(cfg, pgName, pgPort)
+
+	// Ensure PostgreSQL is running
+	dsn, err := localsetup.EnsurePostgresRunning(ctx, projectRoot, opts)
+	if err != nil {
+		return err
+	}
+
 	if !daemonMode {
 		fmt.Printf("Starting agentdx watch in %s\n", projectRoot)
 		fmt.Printf("Backend: PostgreSQL FTS\n")
 	}
 
-	// Initialize PostgreSQL FTS store
-	st, err := store.NewPostgresFTSStore(ctx, cfg.Index.Store.Postgres.DSN, projectRoot)
+	// Initialize PostgreSQL FTS store with the DSN from EnsurePostgresRunning
+	st, err := store.NewPostgresFTSStore(ctx, dsn, projectRoot)
 	if err != nil {
 		return fmt.Errorf("failed to connect to postgres: %w", err)
 	}

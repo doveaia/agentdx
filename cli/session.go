@@ -8,14 +8,17 @@ import (
 	"time"
 
 	"github.com/doveaia/agentdx/config"
+	"github.com/doveaia/agentdx/localsetup"
 	"github.com/doveaia/agentdx/session"
 	"github.com/spf13/cobra"
 )
 
 var (
-	quietMode  bool
-	forceStop  bool
-	jsonOutput bool
+	quietMode     bool
+	forceStop     bool
+	jsonOutput    bool
+	sessionPgName string
+	sessionPgPort int
 )
 
 var sessionCmd = &cobra.Command{
@@ -38,9 +41,19 @@ use the start/stop/status subcommands.`,
 var sessionStartCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start the watch daemon",
-	Long:  `Start the agentdx watch daemon as a background process. If the daemon is already running, this command does nothing (idempotent).`,
+	Long: `Start the agentdx watch daemon as a background process.
+
+If the daemon is already running, this command does nothing (idempotent).
+If PostgreSQL is not running, it will be started automatically (requires Docker).
+
+Container Options:
+  --pg-name, -n    Custom container name (default: agentdx-postgres)
+  --pg-port, -p    Custom host port (default: 55432)`,
 	Example: `  # Start daemon (typical usage)
   agentdx session start
+
+  # Start with custom container settings
+  agentdx session start --pg-name my-project-pg --pg-port 5433
 
   # Start silently (for scripts/hooks)
   agentdx session start --quiet`,
@@ -77,6 +90,8 @@ var sessionStatusCmd = &cobra.Command{
 func init() {
 	// session start flags
 	sessionStartCmd.Flags().BoolVarP(&quietMode, "quiet", "q", false, "Suppress output")
+	sessionStartCmd.Flags().StringVarP(&sessionPgName, "pg-name", "n", "", "PostgreSQL container name (default: agentdx-postgres)")
+	sessionStartCmd.Flags().IntVarP(&sessionPgPort, "pg-port", "p", 0, "PostgreSQL host port (default: 55432)")
 
 	// session stop flags
 	sessionStopCmd.Flags().BoolVarP(&quietMode, "quiet", "q", false, "Suppress output")
@@ -91,6 +106,31 @@ func init() {
 	sessionCmd.AddCommand(sessionStatusCmd)
 }
 
+// buildSessionContainerOptions builds container options from flags and config.
+// Priority: flags > config > defaults
+func buildSessionContainerOptions(cfg *config.Config, flagName string, flagPort int) localsetup.ContainerOptions {
+	// Start with defaults
+	opts := localsetup.DefaultContainerOptions()
+
+	// Apply config values (if set)
+	if cfg.Index.Store.Postgres.ContainerName != "" {
+		opts.Name = cfg.Index.Store.Postgres.ContainerName
+	}
+	if cfg.Index.Store.Postgres.Port != 0 {
+		opts.Port = cfg.Index.Store.Postgres.Port
+	}
+
+	// Apply flag values (highest priority)
+	if flagName != "" {
+		opts.Name = flagName
+	}
+	if flagPort != 0 {
+		opts.Port = flagPort
+	}
+
+	return opts
+}
+
 func runSessionStart(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
@@ -103,8 +143,32 @@ func runSessionStart(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Create daemon manager
-	dm := session.NewDaemonManager(projectRoot)
+	// Load configuration
+	cfg, err := config.Load(projectRoot)
+	if err != nil {
+		if !quietMode {
+			fmt.Fprintf(os.Stderr, "Error: failed to load configuration: %v\n", err)
+		}
+		return err
+	}
+
+	// Build container options: flags > config > defaults
+	opts := buildSessionContainerOptions(cfg, sessionPgName, sessionPgPort)
+
+	// Ensure PostgreSQL is running BEFORE starting daemon
+	_, err = localsetup.EnsurePostgresRunning(ctx, projectRoot, opts)
+	if err != nil {
+		if !quietMode {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		}
+		return err
+	}
+
+	// Create daemon manager with container options
+	dm := session.NewDaemonManagerWithOptions(projectRoot, session.DaemonOptions{
+		PgName: opts.Name,
+		PgPort: opts.Port,
+	})
 
 	// Check if already running
 	wasRunning, err := dm.IsRunning()

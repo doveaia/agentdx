@@ -32,6 +32,8 @@ type ContainerConfig struct {
 	ContainerPort string
 	// RestartPolicy defines when the container should restart (e.g., "always", "unless-stopped")
 	RestartPolicy string
+	// VolumeName is the Docker volume name for data persistence (e.g., "agentdx-postgres-data")
+	VolumeName string
 }
 
 // DatabaseClient defines operations for PostgreSQL database management.

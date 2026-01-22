@@ -55,7 +55,9 @@ type StoreConfig struct {
 }
 
 type PostgresConfig struct {
-	DSN string `yaml:"dsn"`
+	DSN           string `yaml:"dsn"`
+	ContainerName string `yaml:"container_name,omitempty"` // optional, default: agentdx-postgres
+	Port          int    `yaml:"port,omitempty"`           // optional, default: 55432
 }
 
 type ChunkingConfig struct {
