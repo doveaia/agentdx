@@ -16,9 +16,17 @@ const (
 
 // Config holds the agentdx configuration.
 type Config struct {
-	Version int          `yaml:"version"`
-	Mode    string       `yaml:"mode"` // "local" or "remote" - local uses embedded PostgreSQL, remote uses configured backend
-	Index   IndexSection `yaml:"index"`
+	Version   int             `yaml:"version"`
+	Mode      string          `yaml:"mode"` // "local" or "remote" - local uses embedded PostgreSQL, remote uses configured backend
+	Index     IndexSection    `yaml:"index"`
+	Dashboard DashboardConfig `yaml:"dashboard"`
+}
+
+// DashboardConfig holds web dashboard settings.
+type DashboardConfig struct {
+	Enabled bool   `yaml:"enabled"`
+	Port    int    `yaml:"port"`
+	Host    string `yaml:"host"`
 }
 type IndexSection struct {
 	Store    StoreConfig    `yaml:"store"`
@@ -79,6 +87,11 @@ func DefaultConfig() *Config {
 	return &Config{
 		Version: 1,
 		Mode:    "local",
+		Dashboard: DashboardConfig{
+			Enabled: true,
+			Port:    7780,
+			Host:    "127.0.0.1",
+		},
 		Index: IndexSection{
 			Store: StoreConfig{},
 			Chunking: ChunkingConfig{
@@ -208,6 +221,16 @@ func (c *Config) applyDefaults() {
 	// Watch defaults
 	if c.Index.Watch.DebounceMs == 0 {
 		c.Index.Watch.DebounceMs = defaults.Index.Watch.DebounceMs
+	}
+
+	// Dashboard defaults - if Port is 0, assume dashboard was never configured
+	// and apply all defaults including Enabled=true
+	if c.Dashboard.Port == 0 {
+		c.Dashboard.Enabled = defaults.Dashboard.Enabled
+		c.Dashboard.Port = defaults.Dashboard.Port
+	}
+	if c.Dashboard.Host == "" {
+		c.Dashboard.Host = defaults.Dashboard.Host
 	}
 }
 

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/doveaia/agentdx/config"
+	"github.com/doveaia/agentdx/dashboard"
 	"github.com/doveaia/agentdx/indexer"
 	"github.com/doveaia/agentdx/localsetup"
 	"github.com/doveaia/agentdx/store"
@@ -206,6 +207,21 @@ func runWatch(cmd *cobra.Command, args []string) error {
 		log.Printf("Symbol index built: %d symbols extracted", symbolCount)
 	}
 
+	// Start dashboard if enabled
+	var dashboardServer *dashboard.Server
+	if cfg.Dashboard.Enabled {
+		dashboardServer = dashboard.NewServer(cfg, projectRoot, st, symbolStore)
+		if err := dashboardServer.Start(ctx); err != nil {
+			log.Printf("Warning: failed to start dashboard: %v", err)
+		} else {
+			if !daemonMode {
+				fmt.Printf("Dashboard started at %s\n", dashboardServer.URL())
+			} else {
+				log.Printf("Dashboard started at %s", dashboardServer.URL())
+			}
+		}
+	}
+
 	// Initialize watcher
 	w, err := watcher.NewWatcher(projectRoot, ignoreMatcher, cfg.Index.Watch.DebounceMs)
 	if err != nil {
@@ -231,6 +247,12 @@ func runWatch(cmd *cobra.Command, args []string) error {
 				fmt.Println("\nShutting down...")
 			} else {
 				log.Println("Shutting down...")
+			}
+			// Stop dashboard
+			if dashboardServer != nil {
+				if err := dashboardServer.Stop(ctx); err != nil {
+					log.Printf("Warning: failed to stop dashboard: %v", err)
+				}
 			}
 			if err := symbolStore.Persist(ctx); err != nil {
 				log.Printf("Warning: failed to persist symbol index on shutdown: %v", err)

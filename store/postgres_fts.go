@@ -454,3 +454,44 @@ func (s *PostgresFTSStore) GetAllChunks(ctx context.Context) ([]Chunk, error) {
 type FTSSearcher interface {
 	SearchFTS(ctx context.Context, query string, limit int) ([]SearchResult, error)
 }
+
+// Pool returns the underlying connection pool for custom queries.
+func (s *PostgresFTSStore) Pool() *pgxpool.Pool {
+	return s.pool
+}
+
+// ProjectID returns the current project ID.
+func (s *PostgresFTSStore) ProjectID() string {
+	return s.projectID
+}
+
+// GetAllProjects returns all unique project IDs with their file counts.
+func (s *PostgresFTSStore) GetAllProjects(ctx context.Context) ([]ProjectInfo, error) {
+	rows, err := s.pool.Query(ctx,
+		`SELECT project_id, COUNT(*) as file_count
+		FROM documents_fts
+		GROUP BY project_id
+		ORDER BY project_id`,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list projects: %w", err)
+	}
+	defer rows.Close()
+
+	var projects []ProjectInfo
+	for rows.Next() {
+		var p ProjectInfo
+		if err := rows.Scan(&p.ID, &p.FileCount); err != nil {
+			return nil, fmt.Errorf("failed to scan project: %w", err)
+		}
+		projects = append(projects, p)
+	}
+
+	return projects, rows.Err()
+}
+
+// ProjectInfo contains information about an indexed project.
+type ProjectInfo struct {
+	ID        string `json:"id"`
+	FileCount int    `json:"file_count"`
+}
