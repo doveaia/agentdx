@@ -1,0 +1,78 @@
+{{define "content"}}
+<h1>Dashboard</h1>
+
+<div class="card">
+    <h2>Index Status</h2>
+    <div class="stats-grid" id="status-data">
+        {{if .Status}}
+        <div class="stat-item">
+            <span class="stat-value">{{.Status.TotalFiles}}</span>
+            <span class="stat-label">Files</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">{{.Status.TotalChunks}}</span>
+            <span class="stat-label">Chunks</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">
+                <span class="status-badge {{if .Status.BackendOK}}status-healthy{{else}}status-unhealthy{{end}}">
+                    {{if .Status.BackendOK}}Healthy{{else}}Unhealthy{{end}}
+                </span>
+            </span>
+            <span class="stat-label">Backend</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">
+                <span class="status-badge {{if .Status.SymbolsReady}}status-healthy{{else}}status-unhealthy{{end}}">
+                    {{if .Status.SymbolsReady}}Ready{{else}}Not Ready{{end}}
+                </span>
+            </span>
+            <span class="stat-label">Symbols</span>
+        </div>
+        {{end}}
+    </div>
+</div>
+
+<div class="card">
+    <h2>Quick Search</h2>
+    <form action="/search" method="GET" class="search-form">
+        <input type="text" name="q" placeholder="Search code..." autofocus>
+        <button type="submit">Search</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Backend Details</h2>
+    {{if .Status}}
+    <table class="table">
+        <tr>
+            <th>Type</th>
+            <td>{{.Status.BackendType}}</td>
+        </tr>
+        <tr>
+            <th>Host</th>
+            <td>{{.Status.BackendHost}}</td>
+        </tr>
+        <tr>
+            <th>Database</th>
+            <td>{{.Status.BackendName}}</td>
+        </tr>
+        <tr>
+            <th>Search Engine</th>
+            <td>{{.Status.Search}}</td>
+        </tr>
+        <tr>
+            <th>Last Updated</th>
+            <td>{{.Status.LastUpdated}}</td>
+        </tr>
+    </table>
+    {{else}}
+    <p>No status information available.</p>
+    {{end}}
+</div>
+
+<div class="card">
+    <h2>Project</h2>
+    <p><code>{{.ProjectRoot}}</code></p>
+</div>
+{{end}}

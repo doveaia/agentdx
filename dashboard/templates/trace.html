@@ -1,0 +1,144 @@
+{{define "content"}}
+<h1>Trace</h1>
+
+<div class="card">
+    <form action="/trace" method="GET" class="search-form">
+        <input type="text" name="symbol" value="{{.Symbol}}" placeholder="Function/method name">
+        <select name="mode">
+            <option value="callers" {{if eq .Mode "callers"}}selected{{end}}>Callers</option>
+            <option value="callees" {{if eq .Mode "callees"}}selected{{end}}>Callees</option>
+            <option value="graph" {{if eq .Mode "graph"}}selected{{end}}>Call Graph</option>
+        </select>
+        <button type="submit">Trace</button>
+    </form>
+</div>
+
+{{if .Symbol}}
+<div class="card">
+    <h2>{{.Mode}} for "{{.Symbol}}"</h2>
+
+    {{if .Result}}
+        {{if .Result.Symbol}}
+        <div class="result-item">
+            <div class="result-header">
+                <span class="result-path">{{.Result.Symbol.Name}}</span>
+                <span class="result-score">{{.Result.Symbol.Kind}}</span>
+            </div>
+            <div class="result-lines">{{.Result.Symbol.File}}:{{.Result.Symbol.Line}}</div>
+            {{if .Result.Symbol.Signature}}
+            <pre><code>{{.Result.Symbol.Signature}}</code></pre>
+            {{end}}
+        </div>
+        {{end}}
+
+        {{if eq .Mode "callers"}}
+            {{if .Result.Callers}}
+            <h3>Functions that call {{.Symbol}} ({{len .Result.Callers}})</h3>
+            {{range .Result.Callers}}
+            <div class="result-item">
+                <div class="result-header">
+                    <span class="result-path">{{.Symbol.Name}}</span>
+                    <span class="result-score">{{.Symbol.Kind}}</span>
+                </div>
+                <div class="result-lines">{{.CallSite.File}}:{{.CallSite.Line}}</div>
+                {{if .CallSite.Context}}
+                <pre><code>{{.CallSite.Context}}</code></pre>
+                {{end}}
+            </div>
+            {{end}}
+            {{else}}
+            <p>No callers found.</p>
+            {{end}}
+        {{end}}
+
+        {{if eq .Mode "callees"}}
+            {{if .Result.Callees}}
+            <h3>Functions called by {{.Symbol}} ({{len .Result.Callees}})</h3>
+            {{range .Result.Callees}}
+            <div class="result-item">
+                <div class="result-header">
+                    <span class="result-path">{{.Symbol.Name}}</span>
+                    <span class="result-score">{{.Symbol.Kind}}</span>
+                </div>
+                <div class="result-lines">{{.CallSite.File}}:{{.CallSite.Line}}</div>
+                {{if .CallSite.Context}}
+                <pre><code>{{.CallSite.Context}}</code></pre>
+                {{end}}
+            </div>
+            {{end}}
+            {{else}}
+            <p>No callees found.</p>
+            {{end}}
+        {{end}}
+
+        {{if eq .Mode "graph"}}
+            {{if .Result.Graph}}
+            <h3>Call Graph (depth {{.Result.Graph.Depth}})</h3>
+            <p>Root: <strong>{{.Result.Graph.Root}}</strong></p>
+
+            {{if .Result.Graph.Nodes}}
+            <h4>Nodes ({{len .Result.Graph.Nodes}})</h4>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Kind</th>
+                        <th>File</th>
+                        <th>Line</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range $name, $sym := .Result.Graph.Nodes}}
+                    <tr>
+                        <td><code>{{$sym.Name}}</code></td>
+                        <td>{{$sym.Kind}}</td>
+                        <td>{{$sym.File}}</td>
+                        <td>{{$sym.Line}}</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+            {{end}}
+
+            {{if .Result.Graph.Edges}}
+            <h4>Edges ({{len .Result.Graph.Edges}})</h4>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Caller</th>
+                        <th></th>
+                        <th>Callee</th>
+                        <th>Location</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Result.Graph.Edges}}
+                    <tr>
+                        <td><code>{{.Caller}}</code></td>
+                        <td>→</td>
+                        <td><code>{{.Callee}}</code></td>
+                        <td>{{.File}}:{{.Line}}</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+            {{end}}
+            {{else}}
+            <p>No call graph data available.</p>
+            {{end}}
+        {{end}}
+    {{else}}
+    <p>No trace results found.</p>
+    {{end}}
+</div>
+{{end}}
+
+<div class="card">
+    <h2>Trace Modes</h2>
+    <ul>
+        <li><strong>Callers</strong>: Find all functions that call the target symbol</li>
+        <li><strong>Callees</strong>: Find all functions called by the target symbol</li>
+        <li><strong>Graph</strong>: Build a complete call graph around the symbol</li>
+    </ul>
+</div>
+{{end}}

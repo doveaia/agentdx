@@ -1,0 +1,41 @@
+{{define "content"}}
+<h1>Search</h1>
+
+<div class="card">
+    <form action="/search" method="GET" class="search-form">
+        <input type="text" name="q" value="{{.Query}}" placeholder="Search code..." autofocus>
+        <button type="submit">Search</button>
+    </form>
+</div>
+
+{{if .Query}}
+<div class="card">
+    <h2>Results for "{{.Query}}"</h2>
+    {{if .Results}}
+    <p>Found {{len .Results}} results</p>
+    {{range .Results}}
+    <div class="result-item">
+        <div class="result-header">
+            <span class="result-path">{{.FilePath}}</span>
+            <span class="result-score">Score: {{printf "%.3f" .Score}}</span>
+        </div>
+        <div class="result-lines">Lines {{.StartLine}}-{{.EndLine}}</div>
+        <pre><code>{{.Content}}</code></pre>
+    </div>
+    {{end}}
+    {{else}}
+    <p>No results found.</p>
+    {{end}}
+</div>
+{{end}}
+
+<div class="card">
+    <h2>Search Tips</h2>
+    <ul>
+        <li>Use natural language queries: "user authentication flow"</li>
+        <li>Search for function names: "handleRequest"</li>
+        <li>Search for error handling: "error handling middleware"</li>
+        <li>Results are ranked by relevance using BM25 scoring</li>
+    </ul>
+</div>
+{{end}}

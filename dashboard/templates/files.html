@@ -1,0 +1,48 @@
+{{define "content"}}
+<h1>Files</h1>
+
+<div class="card">
+    <form action="/files" method="GET" class="search-form">
+        <input type="text" name="pattern" value="{{.Pattern}}" placeholder="Glob pattern (e.g., *.go, **/*.ts)">
+        <button type="submit">List Files</button>
+    </form>
+</div>
+
+{{if .Pattern}}
+<div class="card">
+    <h2>Files matching "{{.Pattern}}"</h2>
+    {{if .Files}}
+    <p>Found {{len .Files}} files</p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Path</th>
+                <th>Modified</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Files}}
+            <tr>
+                <td><code>{{.Path}}</code></td>
+                <td>{{.ModTime}}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+    {{else}}
+    <p>No files found matching the pattern.</p>
+    {{end}}
+</div>
+{{end}}
+
+<div class="card">
+    <h2>Pattern Examples</h2>
+    <ul>
+        <li><code>*.go</code> - All Go files (recursive)</li>
+        <li><code>**/*.ts</code> - All TypeScript files</li>
+        <li><code>internal/**</code> - All files in internal directory</li>
+        <li><code>cli/*.go</code> - Go files in cli directory only</li>
+        <li><code>*.{js,ts}</code> - JavaScript and TypeScript files</li>
+    </ul>
+</div>
+{{end}}

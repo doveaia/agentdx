@@ -1,0 +1,46 @@
+{{define "content"}}
+<h1>Projects</h1>
+
+<div class="card">
+    <h2>Current Project</h2>
+    <p><code>{{.CurrentProject}}</code></p>
+</div>
+
+<div class="card">
+    <h2>Indexed Projects</h2>
+    {{if .Projects}}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Project ID</th>
+                <th>Files</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Projects}}
+            <tr>
+                <td><code>{{.ID}}</code></td>
+                <td>{{.FileCount}}</td>
+                <td>
+                    {{if .IsCurrent}}
+                    <span class="status-badge status-healthy">Current</span>
+                    {{else}}
+                    -
+                    {{end}}
+                </td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+    {{else}}
+    <p>No projects indexed yet.</p>
+    {{end}}
+</div>
+
+<div class="card">
+    <h2>About Project IDs</h2>
+    <p>Each project is identified by its absolute file path. When you run <code>agentdx watch</code> or <code>agentdx session start</code> in a directory, that directory becomes the project root and is used as the project ID.</p>
+    <p>Multiple projects can share the same PostgreSQL database - each project's data is isolated by its project ID.</p>
+</div>
+{{end}}

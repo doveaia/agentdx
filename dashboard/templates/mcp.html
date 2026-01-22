@@ -1,0 +1,85 @@
+{{define "content"}}
+<h1>MCP Tools</h1>
+
+<div class="card">
+    <h2>Debug Inspector</h2>
+    <p>Launch the MCP Inspector to debug and test agentdx tools:</p>
+    <div class="mcp-command">
+        <code>{{.DebugCommand}}</code>
+        <button class="copy-btn" onclick="copyToClipboard('{{.DebugCommand}}')">Copy</button>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Available Tools</h2>
+    {{range .Tools}}
+    <div class="result-item">
+        <div class="result-header">
+            <span class="result-path">{{.Name}}</span>
+        </div>
+        <p>{{.Description}}</p>
+        {{if .Parameters}}
+        <h4>Parameters</h4>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Parameters}}
+                <tr>
+                    <td><code>{{.Name}}</code></td>
+                    <td>{{.Type}}</td>
+                    <td>{{if .Required}}Yes{{else}}No{{end}}</td>
+                    <td>{{.Description}}</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+        {{else}}
+        <p><em>No parameters required</em></p>
+        {{end}}
+    </div>
+    {{end}}
+</div>
+
+<div class="card">
+    <h2>MCP Configuration</h2>
+    <p>Add agentdx to your Claude Code or Cursor MCP configuration:</p>
+    <pre><code>{
+  "mcpServers": {
+    "agentdx": {
+      "command": "agentdx",
+      "args": ["serve"]
+    }
+  }
+}</code></pre>
+</div>
+
+<div class="card">
+    <h2>Usage Examples</h2>
+    <h4>Search for code</h4>
+    <pre><code>// Using agentdx_search tool
+{
+  "query": "user authentication flow",
+  "limit": 10
+}</code></pre>
+
+    <h4>Find callers of a function</h4>
+    <pre><code>// Using agentdx_trace_callers tool
+{
+  "symbol": "handleLogin"
+}</code></pre>
+
+    <h4>List Go files</h4>
+    <pre><code>// Using agentdx_files tool
+{
+  "pattern": "*.go",
+  "limit": 50
+}</code></pre>
+</div>
+{{end}}

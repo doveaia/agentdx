@@ -1,0 +1,55 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - agentdx</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/htmx.min.js"></script>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="/" class="logo">agentdx</a></li>
+            <li><a href="/" {{if eq .CurrentPage "index"}}class="active"{{end}}>Dashboard</a></li>
+            <li><a href="/search" {{if eq .CurrentPage "search"}}class="active"{{end}}>Search</a></li>
+            <li><a href="/files" {{if eq .CurrentPage "files"}}class="active"{{end}}>Files</a></li>
+            <li><a href="/trace" {{if eq .CurrentPage "trace"}}class="active"{{end}}>Trace</a></li>
+            <li><a href="/mcp" {{if eq .CurrentPage "mcp"}}class="active"{{end}}>MCP Tools</a></li>
+            <li><a href="/projects" {{if eq .CurrentPage "projects"}}class="active"{{end}}>Projects</a></li>
+        </ul>
+    </nav>
+    <main class="container">
+        {{template "content" .}}
+    </main>
+    <script>
+        // SSE connection for live status updates
+        if (window.EventSource) {
+            const evtSource = new EventSource('/events/status');
+            evtSource.addEventListener('status', function(e) {
+                const status = JSON.parse(e.data);
+                // Update status badges if they exist
+                const statusEl = document.getElementById('status-data');
+                if (statusEl) {
+                    statusEl.innerHTML = formatStatus(status);
+                }
+            });
+        }
+
+        function formatStatus(s) {
+            return '<div class="stat-item"><span class="stat-value">' + s.total_files + '</span><span class="stat-label">Files</span></div>' +
+                   '<div class="stat-item"><span class="stat-value">' + s.total_chunks + '</span><span class="stat-label">Chunks</span></div>' +
+                   '<div class="stat-item"><span class="stat-value"><span class="status-badge ' + (s.backend_ok ? 'status-healthy' : 'status-unhealthy') + '">' + (s.backend_ok ? 'Healthy' : 'Unhealthy') + '</span></span><span class="stat-label">Backend</span></div>' +
+                   '<div class="stat-item"><span class="stat-value"><span class="status-badge ' + (s.symbols_ready ? 'status-healthy' : 'status-unhealthy') + '">' + (s.symbols_ready ? 'Ready' : 'Not Ready') + '</span></span><span class="stat-label">Symbols</span></div>';
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                alert('Copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>
+{{end}}
