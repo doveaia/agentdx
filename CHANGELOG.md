@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## 2026-01-22
+FIX: Skip Docker integration tests on Windows (no Windows container image available)
 FIX: Add Windows build tag for SysProcAttr to complete cross-platform daemon support
 FIX: Use build tags for platform-specific SysProcAttr in daemon to enable Linux cross-compilation
 FIX: Add missing chi router dependency to go.mod for dashboard package
