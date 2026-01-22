@@ -120,10 +120,8 @@ func (d *DaemonManager) Start(ctx context.Context) error {
 	cmd.Stdout = logF
 	cmd.Stderr = logF
 
-	// Set up process group for clean termination
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid: true,
-	}
+	// Set up process group for clean termination (platform-specific)
+	cmd.SysProcAttr = getSysProcAttr()
 
 	// Start the daemon
 	if err := cmd.Start(); err != nil {
