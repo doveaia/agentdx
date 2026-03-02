@@ -84,7 +84,7 @@ jobs:
           GOOS=windows GOARCH=amd64 go build -o agentdx-windows-amd64.exe ./cmd/agentdx
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: binaries
           path: agentdx-*
